@@ -149,6 +149,13 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const staticHtml = await staticPage.text();
     assert.equal(staticPage.status, 200, staticHtml);
     assert.match(staticHtml, /Create account/u);
+    const appHtml = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+    assert.match(appHtml, /id="technical-repair"/u);
+    assert.match(appHtml, /codespaces\/new\?repo=bongabhenguai-art\/chatbliz/u);
+    assert.match(appHtml, /id="social-platform"/u);
+    const devcontainer = JSON.parse(await readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"));
+    assert.deepEqual(devcontainer.forwardPorts, [8787]);
+    assert.match(devcontainer.postCreateCommand, /db:apply:local/u);
   } finally {
     await mf.dispose();
   }
