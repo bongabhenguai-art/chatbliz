@@ -1,4 +1,5 @@
 import { PARTNERS, preparePlan } from "../public/src/domain.mjs";
+import { BusinessReviewWorkflow } from "./workflow.mjs";
 
 // Keep active owner devices signed in. Each successful API request renews this
 // one-year cookie and its D1 expiry; signing out revokes the session immediately.
@@ -179,6 +180,18 @@ function buildShape(row) {
     problem: row.problem,
     goal: row.goal,
     learningNotes: row.learning_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+function workflowShape(row) {
+  return {
+    id: row.id,
+    taskId: row.task_id,
+    taskTitle: row.task_title,
+    status: row.status,
+    plan: row.plan_json ? JSON.parse(row.plan_json) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -438,6 +451,85 @@ async function handleApi(request, env) {
     return json({ task: saved }, 201);
   }
 
+  if (pathname === "/api/workflows" && method === "GET") {
+    const { results } = await env.DB.prepare(`SELECT workflow_runs.id, workflow_runs.task_id, tasks.title AS task_title,
+      workflow_runs.status, workflow_runs.plan_json, workflow_runs.created_at, workflow_runs.updated_at
+      FROM workflow_runs JOIN tasks ON tasks.id = workflow_runs.task_id
+      WHERE workflow_runs.user_id = ? ORDER BY workflow_runs.created_at DESC LIMIT 50`)
+      .bind(user.id).all();
+    return json({ workflows: (results || []).map(workflowShape) });
+  }
+
+  if (pathname === "/api/workflows" && method === "POST") {
+    if (!env.BUSINESS_REVIEW_WORKFLOW) return fail("Business review workflows are not configured on this deployment.", 503);
+    let input;
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
+    let taskId;
+    try { taskId = limitedText(input.taskId, 80, "Task ID"); }
+    catch (error) { return fail(error.message); }
+    if (!taskId) return fail("Choose a saved task to prepare for review.");
+    const task = await env.DB.prepare("SELECT id FROM tasks WHERE id = ? AND user_id = ?")
+      .bind(taskId, user.id).first();
+    if (!task) return fail("Task not found.", 404);
+
+    const id = crypto.randomUUID();
+    try {
+      await env.DB.prepare("INSERT INTO workflow_runs (id, user_id, task_id) VALUES (?, ?, ?)")
+        .bind(id, user.id, taskId).run();
+    } catch (error) {
+      if (/workflow_runs_one_pending_per_task_idx|UNIQUE constraint failed: workflow_runs\.task_id/i.test(String(error?.message))) {
+        return fail("This task already has a review workflow in progress.", 409);
+      }
+      return fail("The review workflow could not be saved.", 500);
+    }
+    try {
+      await env.BUSINESS_REVIEW_WORKFLOW.create({
+        id,
+        params: { workflowId: id, ownerId: user.id, taskId }
+      });
+    } catch {
+      await env.DB.prepare(`UPDATE workflow_runs SET status = 'failed', updated_at = ? WHERE id = ? AND user_id = ?`)
+        .bind(new Date().toISOString(), id, user.id).run();
+      return fail("The durable review workflow could not start. Please try again.", 503);
+    }
+    const saved = await env.DB.prepare(`SELECT workflow_runs.id, workflow_runs.task_id, tasks.title AS task_title,
+      workflow_runs.status, workflow_runs.plan_json, workflow_runs.created_at, workflow_runs.updated_at
+      FROM workflow_runs JOIN tasks ON tasks.id = workflow_runs.task_id
+      WHERE workflow_runs.id = ? AND workflow_runs.user_id = ?`).bind(id, user.id).first();
+    if (!saved) return fail("The review workflow did not verify in Chatbliz storage.", 500);
+    return json({ workflow: workflowShape(saved) }, 202);
+  }
+
+  const workflowMatch = pathname.match(/^\/api\/workflows\/([\w-]+)(?:\/(decision))?$/u);
+  if (workflowMatch && method === "GET" && !workflowMatch[2]) {
+    const saved = await env.DB.prepare(`SELECT workflow_runs.id, workflow_runs.task_id, tasks.title AS task_title,
+      workflow_runs.status, workflow_runs.plan_json, workflow_runs.created_at, workflow_runs.updated_at
+      FROM workflow_runs JOIN tasks ON tasks.id = workflow_runs.task_id
+      WHERE workflow_runs.id = ? AND workflow_runs.user_id = ?`)
+      .bind(workflowMatch[1], user.id).first();
+    if (!saved) return fail("Review workflow not found.", 404);
+    return json({ workflow: workflowShape(saved) });
+  }
+
+  if (workflowMatch && method === "POST" && workflowMatch[2] === "decision") {
+    let input;
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
+    if (input.decision !== "approve" && input.decision !== "reject") return fail("Choose approve or reject.");
+    const saved = await env.DB.prepare("SELECT id, status FROM workflow_runs WHERE id = ? AND user_id = ?")
+      .bind(workflowMatch[1], user.id).first();
+    if (!saved) return fail("Review workflow not found.", 404);
+    if (saved.status !== "awaiting_approval") {
+      return fail("This review workflow is no longer waiting for a decision.", 409);
+    }
+    const status = input.decision === "approve" ? "approved" : "rejected";
+    const decisionAt = new Date().toISOString();
+    const update = await env.DB.prepare(`UPDATE workflow_runs SET status = ?, decision_at = ?, updated_at = ?
+      WHERE id = ? AND user_id = ? AND status = 'awaiting_approval'`)
+      .bind(status, decisionAt, decisionAt, saved.id, user.id).run();
+    if (update.meta?.changes !== 1) return fail("This review workflow has already received a decision.", 409);
+    return json({ ok: true, status });
+  }
+
   const taskMatch = pathname.match(/^\/api\/tasks\/([\w-]+)$/u);
   if (taskMatch && method === "PATCH") {
     let input;
@@ -499,3 +591,4 @@ export default {
 };
 
 export { derivePassword, makePassword, verifyPassword };
+export { BusinessReviewWorkflow };

@@ -78,3 +78,31 @@
 .monitor-controls{min-width:0;flex-wrap:wrap}
 .source-label{min-width:0;flex:1 1 auto}
 @media(max-width:720px){.operating-module-grid{grid-template-columns:1fr}.operating-module-card{min-height:160px}}
+
+.workflow-section{margin-top:20px;padding:20px;border:1px solid var(--border);border-radius:12px;background:#121212}
+.workflow-list{display:grid;gap:10px;margin-top:16px}
+.task-row{justify-content:space-between}
+.task-label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+.task-label span{overflow-wrap:anywhere}
+.task-row input{flex:none}
+.task-row.is-done .task-label span{text-decoration:line-through;color:#858585}
+.workflow-card{padding:14px;border:1px solid #343434;border-radius:9px;background:#171717}
+.workflow-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;color:#eee;font-size:12px}
+.workflow-status{color:#d8bb5c;font-size:10px;text-align:right}
+.workflow-approved .workflow-status{color:#8bd9a8}
+.workflow-rejected .workflow-status,.workflow-expired .workflow-status,.workflow-failed .workflow-status{color:#ff9898}
+.workflow-plan,.workflow-disclosure{margin:10px 0 0;color:#b9b9b9;font-size:11px;line-height:1.6;white-space:pre-wrap}
+.workflow-disclosure{color:#8d8d8d}
+.workflow-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.workflow-trigger,.workflow-approve,.workflow-reject{padding:7px 10px;border:1px solid #66551f;border-radius:7px;background:#201d14;color:#e5ca63;font-size:10px;cursor:pointer;white-space:nowrap}
+.workflow-approve{border-color:#216d45;background:#10261a;color:#a2e5bb}
+.workflow-reject{border-color:#633333;background:#261515;color:#ffb0b0}
+.workflow-trigger:disabled,.workflow-actions button:disabled{opacity:.6;cursor:wait}
+.workflow-queued{position:relative;overflow:hidden}
+.workflow-queued:after{position:absolute;right:0;bottom:0;left:0;height:2px;background:linear-gradient(90deg,transparent,#d4af37,transparent);content:"";animation:workflow-progress 1.4s ease-in-out infinite}
+.workflow-queued .workflow-status:before{display:inline-block;width:7px;height:7px;margin-right:6px;border:1px solid #d4af37;border-top-color:transparent;border-radius:50%;content:"";vertical-align:1px;animation:workflow-spin .8s linear infinite}
+.workflow-awaiting_approval .workflow-status:before{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:#d4af37;content:"";vertical-align:1px;animation:workflow-pulse 1.6s ease-in-out infinite}
+@keyframes workflow-progress{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+@keyframes workflow-spin{to{transform:rotate(360deg)}}
+@keyframes workflow-pulse{50%{opacity:.3;box-shadow:0 0 10px #d4af37}}
+@media(prefers-reduced-motion:reduce){.workflow-queued:after,.workflow-queued .workflow-status:before,.workflow-awaiting_approval .workflow-status:before{animation:none}}

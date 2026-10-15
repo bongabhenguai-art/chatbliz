@@ -21,9 +21,10 @@ Wrangler starts the app on its local development URL and uses a local D1 databas
 - The profile editor reads and writes the signed-in owner’s profile. Successful writes are read back and checked before the app reports success.
 - Chat messages and built-in business plans are stored per account and restored after signing back in.
 - Owners can save plan steps as tasks, mark them complete, and see the saved status after reloading.
+- Owners can start a durable Cloudflare Workflow for a saved task, inspect its owner-scoped plan, and approve or reject that plan. The decision is persisted in D1; approval does not trigger an external action.
 - API endpoints require the signed-in session; data queries are scoped to that account.
 
-The current planning engine uses the tested business rules in `public/src/domain.mjs`. It is not an external AI model. AI-provider access, email verification and password recovery, WhatsApp, publishing, bookings, payments, and the four production integrations still need to be connected before those capabilities can be advertised as live.
+The current planning engine uses the tested business rules in `public/src/domain.mjs`. It is not an external AI model. Cloudflare Workflows provides retryable durable execution for review-plan preparation, while D1 stores the owner decision. The animated task-review status reflects this real workflow state and honors reduced-motion settings. AI-provider access, email verification and password recovery, WhatsApp, publishing, bookings, payments, and the four production integrations still need to be connected before those capabilities can be advertised as live.
 
 The home screen also presents the Chatbliz operating loop as an animated cycle linking brand, website and app, studio, business results and customer feedback. Its motion respects the device's reduced-motion setting. The owner can choose a current stage—rebuilding, starting, building or growing—and the built-in planning rules tailor the first step and measure to that stage. This is deterministic planning guidance, not model training or an autonomous learning system. The founding case study describes Bonga Bhengu's business rebuild and the product principles it informs; the planner does not claim to have learned from his story.
 
@@ -53,4 +54,4 @@ npm test
 npx wrangler deploy --dry-run
 ```
 
-The integration tests use Miniflare and a real local D1 runtime to exercise sign-up, duplicate accounts, protected routes, profile write/read-back, chat persistence, customer build memory isolation, task updates, session expiry on logout, and sign-in rate limiting.
+The integration tests use Miniflare and local D1/Workflow runtimes to exercise sign-up, duplicate accounts, protected routes, profile write/read-back, chat persistence, customer build memory isolation, task updates, durable task-plan review and owner approval, session expiry on logout, and sign-in rate limiting.

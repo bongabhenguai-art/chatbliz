@@ -9,6 +9,7 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     modules: true,
     compatibilityDate: "2026-10-15",
     d1Databases: { DB: "chatbliz-test-db" },
+    workflows: { BUSINESS_REVIEW_WORKFLOW: { name: "chatbliz-business-review", className: "BusinessReviewWorkflow" } },
     serviceBindings: { ASSETS: async () => new Response("<h1>Create account</h1>", { headers: { "content-type": "text/html" } }) }
   });
   try {
@@ -17,6 +18,8 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     for (const statement of migration.split(";").map(item => item.trim()).filter(Boolean)) await database.prepare(statement).run();
     const learningMigration = await readFile(new URL("../migrations/0002_customer_build_memory.sql", import.meta.url), "utf8");
     for (const statement of learningMigration.split(";").map(item => item.trim()).filter(Boolean)) await database.prepare(statement).run();
+    const workflowMigration = await readFile(new URL("../migrations/0003_business_review_workflows.sql", import.meta.url), "utf8");
+    for (const statement of workflowMigration.split(";").map(item => item.trim()).filter(Boolean)) await database.prepare(statement).run();
 
     const base = "http://chatbliz.test";
     const dispatch = (input, init = {}) => {
@@ -142,6 +145,48 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const taskList = await mf.dispatchFetch(`${base}/api/tasks`, { headers: { cookie } });
     assert.equal((await taskList.json()).tasks[0].status, "done");
 
+    const startReview = await dispatch(`${base}/api/workflows`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ taskId: task.id })
+    });
+    assert.equal(startReview.status, 202, await startReview.clone().text());
+    const review = (await startReview.json()).workflow;
+    assert.ok(["queued", "awaiting_approval"].includes(review.status));
+    let pendingReview;
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const response = await mf.dispatchFetch(`${base}/api/workflows/${review.id}`, { headers: { cookie } });
+      pendingReview = (await response.json()).workflow;
+      if (pendingReview.status === "awaiting_approval") break;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(pendingReview.status, "awaiting_approval");
+    assert.match(pendingReview.plan.response, /No external action has been taken/u);
+    const secondReview = await dispatch(`${base}/api/workflows`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ taskId: task.id })
+    });
+    assert.equal(secondReview.status, 409);
+    const invalidDecision = await dispatch(`${base}/api/workflows/${review.id}/decision`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ decision: "run-it" })
+    });
+    assert.equal(invalidDecision.status, 400);
+    const approveReview = await dispatch(`${base}/api/workflows/${review.id}/decision`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ decision: "approve" })
+    });
+    assert.equal(approveReview.status, 200);
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const response = await mf.dispatchFetch(`${base}/api/workflows/${review.id}`, { headers: { cookie } });
+      pendingReview = (await response.json()).workflow;
+      if (pendingReview.status === "approved") break;
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(pendingReview.status, "approved");
+    assert.equal(pendingReview.plan.execution, "not-connected");
+    const repeatedDecision = await dispatch(`${base}/api/workflows/${review.id}/decision`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify({ decision: "reject" })
+    });
+    assert.equal(repeatedDecision.status, 409);
+
     const logout = await dispatch(`${base}/api/auth/logout`, { method: "POST", headers: { cookie } });
     assert.equal(logout.status, 200);
     const afterLogout = await mf.dispatchFetch(`${base}/api/me`, { headers: { cookie } });
@@ -179,6 +224,8 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
       body: JSON.stringify({ displayName: "Second Owner", email: "second@example.com", password: "Another-strong-password-82" })
     });
     const secondCookie = secondSignup.headers.get("set-cookie")?.split(";", 1)[0];
+    const otherOwnerReview = await mf.dispatchFetch(`${base}/api/workflows/${review.id}`, { headers: { cookie: secondCookie } });
+    assert.equal(otherOwnerReview.status, 404);
     const invalidTaskReference = await dispatch(`${base}/api/tasks`, {
       method: "POST", headers: { cookie: secondCookie, "content-type": "application/json" },
       body: JSON.stringify({ title: "Task with invalid source id", sourceMessageId: "x".repeat(81) })
@@ -202,6 +249,7 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     assert.match(appHtml, /id="technical-repair"/u);
     assert.match(appHtml, /codespaces\/new\?repo=bongabhenguai-art\/chatbliz/u);
     assert.match(appHtml, /id="social-platform"/u);
+    assert.match(appHtml, /id="workflow-list"/u);
     const devcontainer = JSON.parse(await readFile(new URL("../.devcontainer/devcontainer.json", import.meta.url), "utf8"));
     assert.deepEqual(devcontainer.forwardPorts, [8787]);
     assert.match(devcontainer.postCreateCommand, /db:apply:local/u);

@@ -686,7 +686,8 @@ byId("social-platform").addEventListener("change", event => {
 });
 
 function renderTask(task) {
-  const row = el("label", `task-row${task.status === "done" ? " is-done" : ""}`);
+  const row = el("div", `task-row${task.status === "done" ? " is-done" : ""}`);
+  const taskLabel = el("label", "task-label");
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.checked = task.status === "done";
@@ -704,7 +705,29 @@ function renderTask(task) {
       alert(error.message);
     } finally { checkbox.disabled = false; }
   });
-  row.append(checkbox, el("span", "", task.title));
+  taskLabel.append(checkbox, el("span", "", task.title));
+  const review = el("button", "workflow-trigger", "Prepare review");
+  review.type = "button";
+  review.setAttribute("aria-label", `Prepare an owner review for ${task.title}`);
+  review.addEventListener("click", async () => {
+    review.disabled = true;
+    review.textContent = "Preparing…";
+    try {
+      const { workflow } = await api("/api/workflows", { method: "POST", body: JSON.stringify({ taskId: task.id }) });
+      for (let attempt = 0; attempt < 12; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 250));
+        const current = await api(`/api/workflows/${encodeURIComponent(workflow.id)}`);
+        if (current.workflow.status !== "queued") break;
+      }
+      await loadWorkflows();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      review.disabled = false;
+      review.textContent = "Prepare review";
+    }
+  });
+  row.append(taskLabel, review);
   return row;
 }
 
@@ -715,6 +738,59 @@ async function loadTasks() {
   byId("task-count").textContent = `${tasks.filter(task => task.status === "open").length} open · ${tasks.length} total`;
   if (!tasks.length) list.append(el("p", "empty-state", "Your saved follow-up actions will appear here."));
   else for (const task of tasks) list.append(renderTask(task));
+}
+
+const workflowStatusLabel = {
+  queued: "Preparing review",
+  awaiting_approval: "Waiting for your decision",
+  approved: "Plan approved · follow-through is yours",
+  rejected: "Plan rejected",
+  expired: "Review expired",
+  failed: "Could not prepare review"
+};
+
+function renderWorkflow(workflow) {
+  const card = el("article", `workflow-card workflow-${workflow.status}`);
+  const heading = el("div", "workflow-card-heading");
+  heading.append(el("strong", "", workflow.taskTitle), el("span", "workflow-status", workflowStatusLabel[workflow.status] || workflow.status));
+  card.append(heading);
+  if (workflow.plan?.response) card.append(el("p", "workflow-plan", workflow.plan.response));
+  else if (workflow.status === "queued") card.append(el("p", "workflow-plan", "Chatbliz is preparing the saved plan for your review."));
+
+  if (workflow.status === "awaiting_approval") {
+    const actions = el("div", "workflow-actions");
+    for (const [decision, label] of [["approve", "Approve plan"], ["reject", "Reject plan"]]) {
+      const button = el("button", decision === "approve" ? "workflow-approve" : "workflow-reject", label);
+      button.type = "button";
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          await api(`/api/workflows/${encodeURIComponent(workflow.id)}/decision`, {
+            method: "POST", body: JSON.stringify({ decision })
+          });
+          await loadWorkflows();
+        } catch (error) {
+          alert(error.message);
+          button.disabled = false;
+        }
+      });
+      actions.append(button);
+    }
+    card.append(actions);
+  }
+  if (workflow.status === "approved") {
+    card.append(el("p", "workflow-disclosure", "Approval records the plan only. Connected execution, messaging and publishing are not configured."));
+  }
+  return card;
+}
+
+async function loadWorkflows() {
+  const { workflows } = await api("/api/workflows");
+  const list = byId("workflow-list");
+  list.replaceChildren();
+  byId("workflow-count").textContent = `${workflows.filter(item => ["queued", "awaiting_approval"].includes(item.status)).length} waiting · ${workflows.length} total`;
+  if (!workflows.length) list.append(el("p", "empty-state", "Use Prepare review beside a task to start an owner-controlled workflow."));
+  else for (const workflow of workflows) list.append(renderWorkflow(workflow));
 }
 
 function buildPrompt(build) {
@@ -938,7 +1014,7 @@ async function loadWorkspace(initialProfile) {
   try {
     const details = initialProfile ? { user: currentUser, profile: initialProfile } : await api("/api/me");
     fillProfile(details.user, details.profile);
-    const [messages] = await Promise.all([api("/api/chat"), loadTasks(), loadBuilds()]);
+    const [messages] = await Promise.all([api("/api/chat"), loadTasks(), loadBuilds(), loadWorkflows()]);
     if (messages.messages.length) {
       thread.replaceChildren();
       for (const item of messages.messages) renderSavedMessage(item);
