@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b0b0b">
+    <meta name="description" content="Chatbliz OS — your business partner in your hands. Plan your business, brand, website and content in one chat-first workspace.">
+    <title>Chatbliz OS — Your Business Partner</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main id="auth-screen" class="auth-screen" hidden>
+      <section class="auth-card" aria-labelledby="auth-title">
+        <a class="wordmark auth-brand" href="#home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
+        <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
+        <h1 id="auth-title">Your business workspace</h1>
+        <p id="auth-copy" class="welcome-copy">Create your account once. Chatbliz saves your business profile, conversations, tasks and customer project lessons to this private workspace.</p>
+        <form id="auth-form" class="auth-form">
+          <label id="auth-name-label">Your name<input id="auth-name" name="displayName" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label>Email address<input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></label>
+          <label>Password<input id="auth-password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+          <p id="auth-error" class="form-error" role="alert"></p>
+          <button id="auth-submit" class="send-button auth-submit" type="submit">Create account</button>
+        </form>
+        <button id="auth-toggle" class="text-button" type="button">Already have an account? Sign in</button>
+        <small class="auth-security">Sign in once on this device. Chatbliz remembers it while you keep using the app; sign out to end access. Passwords are hashed before storage.</small>
+      </section>
+    </main>
+
+    <div id="app-shell" class="app-shell" hidden>
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="wordmark" href="#home" aria-label="Chatbliz home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
+        <p class="nav-label">WORKSPACES</p>
+        <nav class="workspace-nav" aria-label="Workspaces">
+          <button class="nav-item active" data-workspace="business"><span class="nav-icon">⌂</span><span>My Business</span></button>
+          <button class="nav-item" data-workspace="brand"><span class="nav-icon">✳</span><span>My Brand</span></button>
+          <button class="nav-item" data-workspace="website"><span class="nav-icon">▤</span><span>My Website &amp; App</span></button>
+          <button class="nav-item" data-workspace="content"><span class="nav-icon">◉</span><span>My Studio</span></button>
+          <button class="nav-item tool-nav" type="button" data-technical-nav><span class="nav-icon">⚙</span><span>Technical repair</span></button>
+        </nav>
+        <div class="sidebar-note"><span class="status-dot"></span><span>Private business workspace<br><small>Connections are not set up yet</small></span></div>
+        <div class="sidebar-bottom"><span class="avatar" id="owner-avatar">CB</span><span><strong id="owner-name">Workspace owner</strong><small id="owner-email">Signed in</small></span><button id="sign-out" class="text-button sign-out" type="button">Sign out</button></div>
+      </aside>
+
+      <main id="home" class="main-content">
+        <header class="topbar">
+          <div class="breadcrumbs"><span>CHATBLIZ OS</span><span class="crumb-divider">/</span><strong id="active-workspace-label">MY BUSINESS</strong></div>
+          <div class="top-actions"><span id="connection-status" class="connection-pill"><i></i> Checking storage</span></div>
+        </header>
+
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
+            <h1 id="workspace-title">What are we working on today?</h1>
+            <p class="welcome-copy">Tell your team what your business needs. Chatbliz helps you plan the next step and keeps each action visible.</p>
+          </div>
+          <div class="today-card"><span class="today-icon">✦</span><span><strong>One conversation</strong><small>Four connected workspaces</small></span></div>
+        </section>
+
+        <section class="journey-section" aria-labelledby="journey-title">
+          <div class="section-heading"><div><p class="eyebrow">HOW CHATBLIZ WORKS</p><h2 id="journey-title">From your brand to your business</h2></div><span class="muted-label">One practical business journey</span></div>
+          <p class="journey-intro">Start with what customers should know about you. Carry that promise into your online experience and content, then use customer response to choose the next business action.</p>
+          <ol class="journey-grid">
+            <li class="journey-card">
+              <span class="journey-number">01</span><p class="journey-kicker">GET CLEAR</p><h3>My Brand</h3>
+              <p>Define who you serve, what problem you solve and why customers should choose you. Turn it into a clear message and visibility plan.</p>
+              <strong class="journey-output">Output: a clear customer promise</strong>
+              <button class="journey-action" type="button" data-journey-workspace="brand" data-journey-prompt="Help me define my brand: I serve [customer], solve [problem], and want customers to choose me because [reason]. Ask me what you need to make this specific.">Plan my brand <span aria-hidden="true">→</span></button>
+            </li>
+            <li class="journey-card">
+              <span class="journey-number">02</span><p class="journey-kicker">MAKE IT EASY TO ACT</p><h3>My Website &amp; App</h3>
+              <p>Use the customer promise to plan useful pages, app screens and a clear next step, such as asking for a quote or contacting you.</p>
+              <strong class="journey-output">Output: a site or app brief</strong>
+              <button class="journey-action" type="button" data-journey-workspace="website" data-journey-prompt="Turn my brand promise into a practical website or app brief. Help me choose the pages or screens, what each should say, and one clear customer action.">Plan my website or app <span aria-hidden="true">→</span></button>
+            </li>
+            <li class="journey-card">
+              <span class="journey-number">03</span><p class="journey-kicker">SHOW UP CONSISTENTLY</p><h3>My Studio</h3>
+              <p>Plan posts, video, podcast or campaign ideas that repeat the same customer promise and invite the right people to take action.</p>
+              <strong class="journey-output">Output: a content plan</strong>
+              <button class="journey-action" type="button" data-journey-workspace="content" data-journey-prompt="Create a practical content plan that explains my brand promise to the right customers and gives them one clear next step. Ask me about my channels and capacity.">Plan my content <span aria-hidden="true">→</span></button>
+            </li>
+            <li class="journey-card">
+              <span class="journey-number">04</span><p class="journey-kicker">LEARN AND IMPROVE</p><h3>My Business</h3>
+              <p>Track enquiries, sales, follow-ups and tasks. Use what customers do and say to improve the offer, brand and next campaign.</p>
+              <strong class="journey-output">Output: a measurable next action</strong>
+              <button class="journey-action" type="button" data-journey-workspace="business" data-journey-prompt="Help me review my business results and choose a measurable next action. I will share my recent enquiries, sales, follow-ups and what customers told me.">Plan my next business action <span aria-hidden="true">→</span></button>
+            </li>
+          </ol>
+          <p class="journey-note"><strong>What works today:</strong> your account can save your business profile, conversations and tasks. Chatbliz creates planning guidance in the app. Website building, brand search, content production or publishing, lead capture, WhatsApp, bookings and payments still need their service connections before they can happen here.</p>
+        </section>
+
+        <section class="business-cycle" aria-labelledby="cycle-title">
+          <div class="section-heading"><div><p class="eyebrow">THE CHATBLIZ OPERATING LOOP</p><h2 id="cycle-title">A business partner in the palm of your hand</h2></div><span class="muted-label">Plan · act · learn · resolve</span></div>
+          <p class="cycle-intro">Chatbliz connects your brand, customer experience, content and business decisions. Each cycle starts from your current stage and uses the customer evidence you bring back to choose a more useful next step.</p>
+          <div class="cycle-layout">
+            <div class="cycle-visual" role="img" aria-label="Chatbliz connects your brand, website and app, studio, business results and customer feedback in a repeating learning loop.">
+              <div class="cycle-center"><span class="mark">C</span><strong>CHATBLIZ</strong><small>BUSINESS PARTNERS</small></div>
+              <span class="cycle-node cycle-brand">Brand</span><span class="cycle-node cycle-web">Website &amp; App</span><span class="cycle-node cycle-studio">Studio</span><span class="cycle-node cycle-business">Business</span>
+              <span class="cycle-orbit" aria-hidden="true"><i></i></span>
+            </div>
+            <div class="stage-picker"><p class="eyebrow">WHERE ARE YOU TODAY?</p><h3>Choose your business stage</h3><p>Chatbliz adapts the first plan to what you need now. You can change stages as your business changes.</p>
+              <div class="stage-options">
+                <button type="button" data-business-stage="rebuilding"><strong>Rebuilding</strong><small>Recover, protect resources, reconnect with customers</small></button>
+                <button type="button" data-business-stage="starting"><strong>Starting</strong><small>Test a customer need and a first offer</small></button>
+                <button type="button" data-business-stage="building"><strong>Building</strong><small>Improve delivery and follow-through</small></button>
+                <button type="button" data-business-stage="growing"><strong>Growing</strong><small>Expand with demand, margin and capacity in view</small></button>
+              </div>
+            </div>
+          </div>
+          <aside class="founder-case"><p class="eyebrow">THE FOUNDING CASE STUDY</p><p>Chatbliz grows from Bonga Bhengu’s rebuild after losing business assets in the 2021 unrest: moving through food and construction work, then teaching himself AI from 2023. That experience shapes practical support for owners rebuilding, starting, building and growing. The app uses explicit planning rules and saved owner-entered project lessons; it has not been trained on Bonga’s story.</p></aside>
+        </section>
+
+        <section class="operating-modules" aria-labelledby="modules-title">
+          <div class="section-heading"><div><p class="eyebrow">RECOVERED FROM BONGA BHENGU OS</p><h2 id="modules-title">One business engine · eight connected capabilities</h2></div><span class="muted-label">Each capability shows its real connection status</span></div>
+          <p class="module-intro">These Chatbliz modules were mapped in the Bonga Bhengu OS project. Open one to use the current workspace or prepare a plan. A module marked as planning or connection-pending does not run an external service yet.</p>
+          <div id="operating-module-grid" class="operating-module-grid"></div>
+        </section>
+
+        <section id="studio-desk" class="studio-desk" aria-labelledby="studio-title" hidden>
+          <header class="studio-topbar">
+            <div><p class="eyebrow">CHATBLIZ TWIN · DIGITAL STUDIO · PODCAST · LIVESTREAM</p><h2 id="studio-title">Business Twin Studio</h2></div>
+            <span id="studio-status" class="studio-status"><i></i> Local studio · not broadcasting</span>
+          </header>
+          <div class="studio-monitors">
+            <section class="studio-monitor preview-monitor" aria-label="Preview monitor">
+              <div class="monitor-heading"><div><strong>PREVIEW</strong><small>Choose a camera or local media</small></div><span>STANDBY</span></div>
+              <div class="monitor-screen"><video id="studio-preview-video" playsinline muted hidden></video><img id="studio-preview-image" alt="Selected preview" hidden><div id="studio-preview-empty" class="monitor-empty"><span>◉</span><strong>Preview source</strong><small>Start a camera or add a local image/video</small></div><span class="monitor-label">PREVIEW</span></div>
+              <div class="monitor-controls"><button id="studio-camera" class="studio-mini" type="button">Start camera</button><select id="studio-camera-select" class="studio-mini source-select" aria-label="Camera device"><option value="">Default camera</option></select><label class="studio-mini file-button" for="studio-media-file">Add media</label><input id="studio-media-file" type="file" accept="image/*,video/*"><select id="studio-source-select" class="studio-mini source-select" aria-label="Preview source" disabled><option value="">No sources</option></select></div>
+            </section>
+            <div class="studio-switcher"><button id="studio-take" class="take-button" type="button" disabled><span>TAKE / CUT</span><b>→</b></button><button id="studio-auto-cut" class="studio-mini auto-cut" type="button" aria-pressed="false" disabled>Auto cut</button><small id="studio-switcher-help">Switch preview to program</small></div>
+            <section class="studio-monitor program-monitor" aria-label="Program output monitor">
+              <div class="monitor-heading"><div><strong>PROGRAM</strong><small>Output sent to local recording</small></div><span class="program-indicator">PROGRAM</span></div>
+              <div class="monitor-screen"><video id="studio-program-video" playsinline muted hidden></video><img id="studio-program-image" alt="Program output" hidden><div id="studio-program-empty" class="monitor-empty"><span>◉</span><strong>Program output</strong><small>Take a preview source to put it here</small></div><span class="monitor-label">PROGRAM</span></div>
+              <div class="monitor-controls"><span id="studio-program-source" class="source-label">No program source</span><button id="studio-record" class="studio-mini record-button" type="button" disabled>● Record</button></div>
+            </section>
+          </div>
+          <section class="studio-operations" aria-labelledby="studio-operations-title">
+            <div class="studio-section-title"><h3 id="studio-operations-title">OPERATIONS</h3><span>Compact controls · current browser session</span></div>
+            <div class="studio-action-grid">
+              <button type="button" class="studio-action" data-studio-action="Cameras">◉<span>Cameras</span></button>
+              <button type="button" class="studio-action" data-studio-action="Audio">♫<span>Audio</span></button>
+              <button type="button" class="studio-action" data-studio-action="Lighting">☼<span>Lighting</span></button>
+              <button type="button" class="studio-action" data-studio-action="Scenes">▧<span>Scenes</span></button>
+              <button type="button" class="studio-action" data-studio-action="AI Director">✧<span>AI Director</span></button>
+              <button type="button" class="studio-action" data-studio-action="Graphics">▣<span>Graphics</span></button>
+              <button type="button" class="studio-action" data-studio-action="Sponsors">♧<span>Sponsors</span></button>
+              <button type="button" class="studio-action" data-studio-action="Chat">☏<span>Chat</span></button>
+              <button type="button" class="studio-action" data-studio-action="Podcast">◉<span>Podcast</span></button>
+            </div>
+            <div id="studio-audio-panel" class="studio-audio-panel" hidden>
+              <label for="studio-mic-select">Microphone</label><select id="studio-mic-select" class="studio-mini"><option value="">Choose microphone</option></select>
+              <button id="studio-mic-toggle" class="studio-mini" type="button">Connect mic</button><button id="studio-mic-mute" class="studio-mini" type="button" disabled>Mute mic</button>
+              <label class="studio-gain-label" for="studio-mic-gain">Mic gain</label><input id="studio-mic-gain" type="range" min="0" max="2" step="0.05" value="1" disabled>
+              <span id="studio-audio-level" class="audio-level" aria-label="Microphone level"><i></i></span>
+              <span id="studio-audio-state" class="audio-state">Mic not connected</span>
+            </div>
+            <p id="studio-message" class="studio-message" role="status">Add a camera or local media. Program output stays on this device; streaming services are not connected.</p>
+          </section>
+          <footer class="studio-footer">
+            <div class="studio-health"><span><i></i><b id="studio-camera-health">Camera off</b></span><span><i></i><b>Local session</b></span><span><i></i><b id="studio-record-health">Not recording</b></span></div>
+            <button id="studio-go-live" class="studio-live" type="button" title="Streaming is not connected">Go Live <small>Not connected</small></button>
+            <span class="studio-output-note">Broadcast provider not configured</span>
+          </footer>
+        </section>
+
+        <section id="developer-desk" class="developer-desk" aria-labelledby="developer-title" hidden>
+          <div class="section-heading"><div><p class="eyebrow">MY WEBSITE &amp; APP · DEVELOPER INTERFACE</p><h2 id="developer-title">Build for each customer</h2></div><span class="muted-label">One sign-in · separate project memory</span></div>
+          <p class="developer-intro">Sign in once, create a separate build brief for each customer business, and use the same four-workspace loop to shape its brand, website or app, content and operations. Save customer feedback as a project lesson; Chatbliz can include that lesson in the next build prompt.</p>
+          <form id="build-form" class="build-form">
+            <label>Customer business<input id="build-business" maxlength="120" placeholder="Business or project name" required></label>
+            <label>Business type<input id="build-type" maxlength="100" placeholder="Food, fashion, insurance…" required></label>
+            <label class="build-wide">Customer need<input id="build-problem" maxlength="1000" placeholder="What problem should this build solve?" required></label>
+            <label class="build-wide">Build goal<input id="build-goal" maxlength="700" placeholder="What should the customer be able to do when it is working?" required></label>
+            <p id="build-status" class="form-status" role="status"></p>
+            <button class="send-button build-submit" type="submit">Save customer build</button>
+          </form>
+          <div class="build-list-heading"><h3>Customer builds</h3><span id="build-count" class="muted-label">Loading projects</span></div>
+          <div id="build-list" class="build-list" aria-live="polite"></div>
+          <p class="developer-note"><strong>Learning and privacy:</strong> saved lessons are owner-entered project notes, reused only when you ask Chatbliz to continue that same project. This does not train the underlying AI model or share one customer's notes with another. Keep passwords, payment details and private customer information out of build notes. Code generation, customer logins and live publishing still require connected developer and hosting services.</p>
+        </section>
+
+        <section id="technical-repair" class="technical-repair" aria-labelledby="technical-title" hidden>
+          <div class="section-heading"><div><p class="eyebrow">OWNER TOOLING</p><h2 id="technical-title">Chatbliz technical repair</h2></div><span class="muted-label">Read-only health checks · GitHub repair container</span></div>
+          <p class="technical-intro">Check the running app and its storage from your dashboard. If code needs work, open the Chatbliz GitHub branch in its prepared development container; sign in to GitHub there to review or change the code.</p>
+          <div class="technical-grid">
+            <article class="technical-card">
+              <span class="technical-icon">✓</span><h3>Check this app</h3>
+              <p>Tests your signed-in session, database response and loaded front-end files. These checks do not change data or code.</p>
+              <button id="run-diagnostics" class="build-primary" type="button">Run technical checks</button>
+              <p id="diagnostics-status" class="form-status" role="status">Checks have not run yet.</p>
+              <div id="diagnostics-results" class="diagnostics-results" aria-live="polite"></div>
+            </article>
+            <article class="technical-card">
+              <span class="technical-icon">⌘</span><h3>Repair with GitHub</h3>
+              <p>Open the source branch or create a Codespace from the repository's dev container. GitHub sign-in is required; review changes before merging or deploying.</p>
+              <div class="technical-actions">
+                <a class="build-secondary" href="https://github.com/bongabhenguai-art/chatbliz/tree/codex/real-chatbliz-app" target="_blank" rel="noreferrer">Open Chatbliz on GitHub ↗</a>
+                <a class="build-primary" href="https://github.com/codespaces/new?repo=bongabhenguai-art/chatbliz&amp;ref=codex/real-chatbliz-app" target="_blank" rel="noreferrer">Create repair container ↗</a>
+              </div>
+              <p class="technical-note">The container runs Chatbliz locally with a local D1 database. It does not receive production credentials or deploy changes automatically. GitHub shows the Codespaces payer and available machine options before you start.</p>
+            </article>
+          </div>
+
+          <article class="social-wizard" aria-labelledby="social-wizard-title">
+            <div><p class="eyebrow">SOCIAL CONNECTION SETUP</p><h3 id="social-wizard-title">Choose a platform to connect</h3><p>Each channel uses its official authorization. Chatbliz must first have a registered developer app for that platform; the customer signs in on the platform itself and never gives Chatbliz their social password.</p></div>
+            <div class="social-wizard-controls">
+              <label for="social-platform">Platform<select id="social-platform"><option value="meta">Facebook &amp; Instagram</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="youtube">YouTube</option><option value="x">X</option></select></label>
+              <a id="social-setup-link" class="build-primary" href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer">Open official app setup ↗</a>
+            </div>
+            <p id="social-setup-guidance" class="technical-note" role="status">Setup is not complete yet. Register the Chatbliz app with this provider and configure its OAuth credentials as Cloudflare Worker secrets. The provider-specific authorization and callback code must also be installed and tested before Chatbliz can link accounts or publish.</p>
+          </article>
+        </section>
+
+        <section class="partners-section" aria-labelledby="partners-title">
+          <div class="section-heading"><div><p class="eyebrow">YOUR AI BUSINESS TEAM</p><h2 id="partners-title">Choose who helps</h2></div><span class="muted-label">Planning tools · provider connections pending</span></div>
+          <p class="module-intro">The Twin keeps one owner-controlled business workspace across tasks. ChatGPT Codex, Shogo AI, Arena AI, Claude and Haile Studio are requested provider integrations; none is connected until its official API, permissions and real workflow are verified.</p>
+          <div class="partner-list" id="partner-list"></div>
+        </section>
+
+        <section class="conversation" aria-label="Chatbliz conversation">
+          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
+          <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
+            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p id="greeting">Welcome to Chatbliz. Tell your business team what you are working on.</p><small>Conversations and tasks are saved to your account.</small></div></article>
+          </div>
+          <div class="suggestions" id="suggestions" aria-label="Suggested prompts"></div>
+          <form id="chat-form" class="composer">
+            <label class="sr-only" for="message-input">Message Chatbliz</label>
+            <textarea id="message-input" rows="1" maxlength="4000" placeholder="Tell Chatbliz what your business needs…" required></textarea>
+            <div class="composer-bottom"><span>Enter to send · Shift + Enter for a new line</span><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
+          </form>
+          <p class="disclosure">Chatbliz saves your conversations and work to your account. Plans in this version are produced by the built-in business workflow; external AI, WhatsApp, publishing, bookings and payments are not connected.</p>
+        </section>
+
+        <section class="profile-section" aria-labelledby="profile-title">
+          <div class="section-heading"><div><p class="eyebrow">CHATBLIZ WORKSPACE SETUP</p><h2 id="profile-title">Your business profile</h2></div><span class="muted-label">Saved to your account</span></div>
+          <form id="profile-form" class="profile-form">
+            <label>Your name<input id="profile-display-name" maxlength="80" required></label>
+            <label>Business name<input id="profile-business-name" maxlength="120" placeholder="Your business"></label>
+            <label>Industry<input id="profile-industry" maxlength="100" placeholder="Fashion, food, services…"></label>
+            <label>Location<input id="profile-location" maxlength="120" placeholder="City or service area"></label>
+            <label>Website<input id="profile-website" maxlength="200" type="url" placeholder="https://"></label>
+            <label>WhatsApp number<input id="profile-whatsapp" maxlength="32" type="tel" placeholder="+27…"></label>
+            <button class="send-button profile-save" type="submit">Save profile</button>
+            <p id="profile-status" class="form-status" role="status"></p>
+          </form>
+        </section>
+
+        <section class="tasks-section" aria-labelledby="tasks-title">
+          <div class="section-heading"><div><p class="eyebrow">FOLLOW-THROUGH</p><h2 id="tasks-title">My business tasks</h2></div><span id="task-count" class="muted-label">Loading tasks</span></div>
+          <div id="task-list" class="task-list" aria-live="polite"></div>
+        </section>
+
+        <section class="workflow-section" aria-labelledby="workflow-title">
+          <div class="section-heading"><div><p class="eyebrow">OWNER CONTROL</p><h2 id="workflow-title">Plan review workflows</h2></div><span id="workflow-count" class="muted-label">Loading reviews</span></div>
+          <p class="module-intro">Prepare a saved task for review, then approve or reject its plan. Approval records your decision; it does not send messages, publish content, spend money or perform other external actions.</p>
+          <div id="workflow-list" class="workflow-list" aria-live="polite"></div>
+        </section>
+
+        <section class="products-section" aria-labelledby="products-title">
+          <div class="section-heading"><div><p class="eyebrow">FOUR CORE SERVICES</p><h2 id="products-title">Your workspaces</h2></div><span class="muted-label">Shared capabilities, one Chatbliz account</span></div>
+          <div id="product-grid" class="product-grid"></div>
+        </section>
+
+        <section class="plans-section" aria-labelledby="plans-title">
+          <div class="section-heading"><div><p class="eyebrow">GROW WITH YOUR TEAM</p><h2 id="plans-title">Chatbliz packages</h2></div><span class="muted-label">Checkout and billing are not connected</span></div>
+          <div id="plan-grid" class="plan-grid"></div>
+          <p class="pricing-note">Prices and package details need owner confirmation before checkout. Enterprise is custom quoted.</p>
+        </section>
+        <footer class="footer">Chatbliz OS <span>·</span> Built for business owners <span>·</span> <a href="https://chatbliz.online" target="_blank" rel="noreferrer">chatbliz.online</a></footer>
+      </main>
+    </div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

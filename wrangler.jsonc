@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "chatbliz-os",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-15",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    "not_found_handling": "404-page"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "chatbliz-os-db",
+      "database_id": "03dafb96-f099-4d0b-ab28-841190d3d35d",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "chatbliz-business-review",
+      "binding": "BUSINESS_REVIEW_WORKFLOW",
+      "class_name": "BusinessReviewWorkflow"
+    }
+  ]
+}

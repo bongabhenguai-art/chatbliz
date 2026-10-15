@@ -1,0 +1,32 @@
+name: Chatbliz checks
+
+on:
+  push:
+    branches:
+      - main
+      - codex/real-chatbliz-app
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run integration and domain tests
+        run: npm test
+      - name: Validate Cloudflare Worker bundle
+        run: npx wrangler deploy --dry-run
