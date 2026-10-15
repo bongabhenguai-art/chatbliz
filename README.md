@@ -31,6 +31,8 @@ The home screen guides an owner through a practical loop: **My Brand** clarifies
 
 The **My Website & App** workspace includes a developer build desk for one owner login and multiple customer business projects. Each build keeps its need, goal and owner-entered customer lesson in a separate, owner-scoped D1 record. “Plan next build step” includes that project’s saved lesson in the next Chatbliz conversation. This is explicit project memory, not model training; project data is not shared between customers. Code generation, customer logins and publishing still require connected developer and hosting services.
 
+The **Technical repair** dashboard runs read-only checks for the signed-in session, D1 health and front-end assets, then links to the source branch and a GitHub Codespace using `.devcontainer/`. The Codespace starts Wrangler with a local D1 database; it has no production credentials and does not deploy automatically. GitHub displays the account responsible for Codespaces usage before creation. The social setup wizard links to each provider’s official developer console. Actual platform authorization is not active yet: each provider needs a Chatbliz developer app, credentials, and its own tested OAuth authorization/callback implementation before accounts can be linked or content published.
+
 ## Deploy to a dedicated Cloudflare Worker
 
 This app is configured for its own Worker, `chatbliz-os`, and a dedicated D1 database, `chatbliz-os-db`. It does not reuse the existing `zuxuru` Worker or `bonga-bhengu-db` database.
