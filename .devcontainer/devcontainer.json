@@ -1,0 +1,20 @@
+{
+  "name": "Chatbliz OS repair container",
+  "build": { "dockerfile": "Dockerfile" },
+  "remoteUser": "node",
+  "forwardPorts": [8787],
+  "portsAttributes": {
+    "8787": {
+      "label": "Chatbliz local preview",
+      "onAutoForward": "openBrowser",
+      "visibility": "private"
+    }
+  },
+  "postCreateCommand": "npm ci && npm run db:apply:local",
+  "postStartCommand": "npm run dev -- --ip 0.0.0.0",
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint"]
+    }
+  }
+}
