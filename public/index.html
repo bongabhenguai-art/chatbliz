@@ -36,6 +36,7 @@
           <button class="nav-item" data-workspace="brand"><span class="nav-icon">✳</span><span>My Brand</span></button>
           <button class="nav-item" data-workspace="website"><span class="nav-icon">▤</span><span>My Website &amp; App</span></button>
           <button class="nav-item" data-workspace="content"><span class="nav-icon">◉</span><span>My Studio</span></button>
+          <button class="nav-item tool-nav" type="button" data-technical-nav><span class="nav-icon">⚙</span><span>Technical repair</span></button>
         </nav>
         <div class="sidebar-note"><span class="status-dot"></span><span>Private business workspace<br><small>Connections are not set up yet</small></span></div>
         <div class="sidebar-bottom"><span class="avatar" id="owner-avatar">CB</span><span><strong id="owner-name">Workspace owner</strong><small id="owner-email">Signed in</small></span><button id="sign-out" class="text-button sign-out" type="button">Sign out</button></div>
@@ -102,6 +103,38 @@
           <div class="build-list-heading"><h3>Customer builds</h3><span id="build-count" class="muted-label">Loading projects</span></div>
           <div id="build-list" class="build-list" aria-live="polite"></div>
           <p class="developer-note"><strong>Learning and privacy:</strong> saved lessons are owner-entered project notes, reused only when you ask Chatbliz to continue that same project. This does not train the underlying AI model or share one customer's notes with another. Keep passwords, payment details and private customer information out of build notes. Code generation, customer logins and live publishing still require connected developer and hosting services.</p>
+        </section>
+
+        <section id="technical-repair" class="technical-repair" aria-labelledby="technical-title" hidden>
+          <div class="section-heading"><div><p class="eyebrow">OWNER TOOLING</p><h2 id="technical-title">Chatbliz technical repair</h2></div><span class="muted-label">Read-only health checks · GitHub repair container</span></div>
+          <p class="technical-intro">Check the running app and its storage from your dashboard. If code needs work, open the Chatbliz GitHub branch in its prepared development container; sign in to GitHub there to review or change the code.</p>
+          <div class="technical-grid">
+            <article class="technical-card">
+              <span class="technical-icon">✓</span><h3>Check this app</h3>
+              <p>Tests your signed-in session, database response and loaded front-end files. These checks do not change data or code.</p>
+              <button id="run-diagnostics" class="build-primary" type="button">Run technical checks</button>
+              <p id="diagnostics-status" class="form-status" role="status">Checks have not run yet.</p>
+              <div id="diagnostics-results" class="diagnostics-results" aria-live="polite"></div>
+            </article>
+            <article class="technical-card">
+              <span class="technical-icon">⌘</span><h3>Repair with GitHub</h3>
+              <p>Open the source branch or create a Codespace from the repository's dev container. GitHub sign-in is required; review changes before merging or deploying.</p>
+              <div class="technical-actions">
+                <a class="build-secondary" href="https://github.com/bongabhenguai-art/chatbliz/tree/codex/real-chatbliz-app" target="_blank" rel="noreferrer">Open Chatbliz on GitHub ↗</a>
+                <a class="build-primary" href="https://github.com/codespaces/new?repo=bongabhenguai-art/chatbliz&amp;ref=codex/real-chatbliz-app" target="_blank" rel="noreferrer">Create repair container ↗</a>
+              </div>
+              <p class="technical-note">The container runs Chatbliz locally with a local D1 database. It does not receive production credentials or deploy changes automatically. GitHub shows the Codespaces payer and available machine options before you start.</p>
+            </article>
+          </div>
+
+          <article class="social-wizard" aria-labelledby="social-wizard-title">
+            <div><p class="eyebrow">SOCIAL CONNECTION SETUP</p><h3 id="social-wizard-title">Choose a platform to connect</h3><p>Each channel uses its official authorization. Chatbliz must first have a registered developer app for that platform; the customer signs in on the platform itself and never gives Chatbliz their social password.</p></div>
+            <div class="social-wizard-controls">
+              <label for="social-platform">Platform<select id="social-platform"><option value="meta">Facebook &amp; Instagram</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="youtube">YouTube</option><option value="x">X</option></select></label>
+              <a id="social-setup-link" class="build-primary" href="https://developers.facebook.com/apps/" target="_blank" rel="noreferrer">Open official app setup ↗</a>
+            </div>
+            <p id="social-setup-guidance" class="technical-note" role="status">Setup is not complete yet. Register the Chatbliz app with this provider and configure its OAuth credentials as Cloudflare Worker secrets. The provider-specific authorization and callback code must also be installed and tested before Chatbliz can link accounts or publish.</p>
+          </article>
         </section>
 
         <section class="partners-section" aria-labelledby="partners-title">
