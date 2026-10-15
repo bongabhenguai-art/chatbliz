@@ -17,7 +17,7 @@ Wrangler starts the app on its local development URL and uses a local D1 databas
 ## Real application behavior
 
 - Sign-up stores a normalized email, PBKDF2 password hash, a salted password record, an HTTP-only session token hash, and a workspace profile in D1.
-- Sign-in verifies passwords, uses the same error for unknown emails and wrong passwords, and limits repeated failures by hashed IP and email.
+- Sign-in verifies passwords, uses the same error for unknown emails and wrong passwords, and limits repeated failures by hashed IP and email. A device receives a rolling one-year session renewed as the owner uses Chatbliz; sign-out revokes it. Clearing browser storage or an extended period without activity can require signing in again.
 - The profile editor reads and writes the signed-in owner’s profile. Successful writes are read back and checked before the app reports success.
 - Chat messages and built-in business plans are stored per account and restored after signing back in.
 - Owners can save plan steps as tasks, mark them complete, and see the saved status after reloading.
