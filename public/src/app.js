@@ -224,6 +224,7 @@ let studioPreviewSource = null;
 let studioProgramSource = null;
 let studioRecorder = null;
 let studioRecordedChunks = [];
+let studioRecordingHasMic = false;
 const studioSources = new Map();
 let studioMicStream = null;
 let studioAudioContext = null;
@@ -352,7 +353,7 @@ function refreshStudioControls() {
   byId("studio-camera-health").textContent = studioCameraStream?.active ? "Camera on" : "Camera off";
   byId("studio-program-source").textContent = studioProgramSource?.label || "No program source";
   byId("studio-status").lastChild.textContent = studioRecorder?.state === "recording" ? " Recording locally" : " Local studio · not broadcasting";
-  byId("studio-auto-cut").disabled = studioSources.size < 2;
+  byId("studio-auto-cut").disabled = [...studioSources.values()].filter(source => source.kind !== "image").length < 2;
   byId("studio-switcher-help").textContent = studioAutoCutTimer ? "Auto cut running · press to stop" : studioSources.size < 2 ? "Add a second source to use auto cut" : studioPreviewSource ? `Ready: ${studioPreviewSource.label}` : "Choose a source for preview";
 }
 
@@ -427,6 +428,7 @@ byId("studio-media-file").addEventListener("change", event => {
     event.target.value = "";
     return;
   }
+  stopStudioAutoCut("Auto cut stopped while replacing a media source.");
   const old = studioSources.get("media");
   if (old?.url?.startsWith("blob:")) URL.revokeObjectURL(old.url);
   studioSources.set("media", { kind, url: URL.createObjectURL(file), label: file.name });
@@ -434,6 +436,7 @@ byId("studio-media-file").addEventListener("change", event => {
   selectStudioPreview("media");
   setStudioMessage(`${file.name} is loaded in the preview. Media stays in this browser and is not uploaded.`);
   refreshStudioControls();
+  event.target.value = "";
 });
 
 byId("studio-take").addEventListener("click", () => {
@@ -551,7 +554,8 @@ byId("studio-record").addEventListener("click", () => {
   try {
     studioRecordedChunks = [];
     const recordingStream = capture.call(video);
-    if (studioAudioDestination) recordingStream.addTrack(studioAudioDestination.stream.getAudioTracks()[0].clone());
+    studioRecordingHasMic = Boolean(studioAudioDestination && !studioMicMuted);
+    if (studioRecordingHasMic) recordingStream.addTrack(studioAudioDestination.stream.getAudioTracks()[0].clone());
     studioRecorder = new MediaRecorder(recordingStream);
     studioRecorder.addEventListener("dataavailable", event => { if (event.data.size) studioRecordedChunks.push(event.data); });
     studioRecorder.addEventListener("stop", () => {
@@ -560,7 +564,7 @@ byId("studio-record").addEventListener("click", () => {
       link.href = URL.createObjectURL(blob);
       link.download = `chatbliz-studio-${new Date().toISOString().replaceAll(":", "-")}.webm`;
       link.click();
-      setStudioMessage(`Local ${studioMicStream ? "video and microphone audio" : "video-only"} recording downloaded to your device. It was not uploaded or published.`);
+      setStudioMessage(`Local ${studioRecordingHasMic ? "video and microphone audio" : "video-only"} recording downloaded to your device. It was not uploaded or published.`);
       byId("studio-record-health").textContent = "Recording downloaded";
       button.textContent = "● Record";
       refreshStudioControls();
@@ -568,7 +572,7 @@ byId("studio-record").addEventListener("click", () => {
     studioRecorder.start();
     button.textContent = "■ Stop & save";
     byId("studio-record-health").textContent = "Recording locally";
-    setStudioMessage(`Recording program output ${studioMicStream ? "with microphone audio" : "without microphone audio"}. Stop & save downloads a WebM file to your device.`);
+    setStudioMessage(`Recording program output ${studioRecordingHasMic ? "with microphone audio" : "without microphone audio"}. Stop & save downloads a WebM file to your device.`);
     refreshStudioControls();
   } catch {
     setStudioMessage("Recording could not start for this source in your browser.");
@@ -585,7 +589,8 @@ document.querySelectorAll("[data-studio-action]").forEach(button => button.addEv
     "AI Director": "AI Director is not connected yet. No automated production decisions are running.",
     Graphics: "Graphics overlays are not connected yet.",
     Sponsors: "Sponsor assets and sponsor management are not connected yet.",
-    Chat: "Studio chat is not connected yet. Use the Chatbliz conversation in My Business."
+    Chat: "Studio chat is not connected yet. Use the Chatbliz conversation in My Business.",
+    Podcast: "Basic podcast capture uses the local camera and microphone recording path. Separate tracks, editing, cloud storage and podcast publishing are not connected."
   };
   setStudioMessage(guidance[action] || `${action} is not configured yet.`);
 }));
