@@ -586,7 +586,7 @@ document.querySelectorAll("[data-studio-action]").forEach(button => button.addEv
     Audio: "Open the audio panel to connect a microphone, adjust its recording gain and check its input meter. This is a local browser mix.",
     Lighting: "Lighting controls require compatible connected hardware; none is configured in this workspace.",
     Scenes: "For this session, use Add media to load a scene image or video into Preview.",
-    "AI Director": "AI Director is not connected yet. No automated production decisions are running.",
+    "AI Director": "The planned Studio engine is open-source Wan 2.2 running through ComfyUI. Its model host is not connected yet, so no clip is generated and no Hailuo API is used.",
     Graphics: "Graphics overlays are not connected yet.",
     Sponsors: "Sponsor assets and sponsor management are not connected yet.",
     Chat: "Studio chat is not connected yet. Use the Chatbliz conversation in My Business.",
