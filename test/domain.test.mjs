@@ -37,6 +37,20 @@ test("a customer lead problem receives a measurable business plan", () => {
   assert.equal(result.execution, "not-connected");
 });
 
+test("low sales and not enough customers receive lead-flow guidance", () => {
+  for (const message of ["My sales are low", "I do not have enough customers"]) {
+    const result = preparePlan(message);
+    assert.equal(result.solution.area, "Lead flow and sales");
+  }
+});
+
+test("a money-saving request receives cost and pricing guidance", () => {
+  const result = preparePlan("I need a money-saving plan for my business");
+  assert.equal(result.solution.area, "Cost control and pricing");
+  assert.match(result.solution.actions.join(" "), /profit margin/i);
+  assert.doesNotMatch(result.solution.actions.join(" "), /runtime database/i);
+});
+
 test("a reported signup write problem gets a verification-first repair plan", () => {
   const result = preparePlan("Signup says success but it is not saving to the database");
   assert.equal(result.solution.area, "Digital product reliability");
