@@ -158,8 +158,24 @@ document.querySelectorAll("[data-workspace]").forEach(button => {
   });
 });
 
+document.querySelector("[data-technical-nav]").addEventListener("click", () => showTechnicalDesk());
+
+function showTechnicalDesk() {
+  document.querySelectorAll("[data-workspace]").forEach(button => button.classList.remove("active"));
+  byId("developer-desk").hidden = true;
+  byId("technical-repair").hidden = false;
+  byId("app-shell").classList.add("technical-mode");
+  document.querySelector("[data-technical-nav]").classList.add("active");
+  byId("active-workspace-label").textContent = "TECHNICAL REPAIR";
+  byId("workspace-title").textContent = "Check and repair Chatbliz";
+  byId("technical-repair").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function setWorkspace(product) {
   document.querySelectorAll("[data-workspace]").forEach(button => button.classList.toggle("active", button.dataset.workspace === product.id));
+  document.querySelector("[data-technical-nav]").classList.remove("active");
+  byId("technical-repair").hidden = true;
+  byId("app-shell").classList.remove("technical-mode");
   byId("active-workspace-label").textContent = product.name.toUpperCase();
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
   byId("developer-desk").hidden = product.id !== "website";
@@ -174,6 +190,64 @@ document.querySelectorAll("[data-journey-workspace]").forEach(button => {
     input.focus();
     input.scrollIntoView({ behavior: "smooth", block: "center" });
   });
+});
+
+byId("run-diagnostics").addEventListener("click", async () => {
+  const button = byId("run-diagnostics");
+  const status = byId("diagnostics-status");
+  const results = byId("diagnostics-results");
+  button.disabled = true;
+  status.textContent = "Checking your account, storage and app files…";
+  results.replaceChildren();
+  const checks = [
+    ["Signed-in account", async () => {
+      const result = await api("/api/me");
+      return `${result.user.displayName} (${result.user.email})`;
+    }],
+    ["Chatbliz database", async () => {
+      const result = await api("/api/health");
+      if (result.storage !== "connected") throw new Error("Storage response is not healthy.");
+      return "D1 is responding";
+    }],
+    ["Front-end app file", async () => checkStaticAsset("./src/app.js")],
+    ["Front-end styles", async () => checkStaticAsset("./styles.css")]
+  ];
+  let passed = 0;
+  try {
+    for (const [label, run] of checks) {
+      const row = el("div", "diagnostic-row");
+      row.append(el("span", "diagnostic-name", label));
+      try {
+        row.append(el("span", "diagnostic-pass", `OK · ${await run()}`));
+        passed++;
+      } catch (error) { row.append(el("span", "diagnostic-fail", `Needs attention · ${error.message}`)); }
+      results.append(row);
+    }
+    status.textContent = `${passed}/${checks.length} checks passed · ${new Date().toLocaleString()}`;
+  } finally { button.disabled = false; }
+});
+
+async function checkStaticAsset(path) {
+  const response = await fetch(path, { credentials: "same-origin", cache: "no-store" });
+  if (!response.ok) throw new Error(`File returned ${response.status}.`);
+  const body = await response.text();
+  if (!body.trim()) throw new Error("File is empty.");
+  return `loaded (${response.status})`;
+}
+
+const socialProviders = {
+  meta: { url: "https://developers.facebook.com/apps/", name: "Meta", needs: "Create a Meta developer app and enable the Facebook Login and Instagram Graph API products needed for this business." },
+  tiktok: { url: "https://developers.tiktok.com/", name: "TikTok", needs: "Create a TikTok developer app and request the user and content permissions this business needs." },
+  linkedin: { url: "https://developer.linkedin.com/", name: "LinkedIn", needs: "Create a LinkedIn developer app and request the organization or member permissions required for the intended workflow." },
+  youtube: { url: "https://console.cloud.google.com/apis/credentials", name: "YouTube", needs: "Create a Google Cloud OAuth client and enable the YouTube API scopes the business needs." },
+  x: { url: "https://developer.x.com/en/portal/dashboard", name: "X", needs: "Create an X developer app and enable OAuth 2.0 with the least permissions required." }
+};
+
+byId("social-platform").addEventListener("change", event => {
+  const provider = socialProviders[event.target.value];
+  byId("social-setup-link").href = provider.url;
+  byId("social-setup-link").textContent = `Open ${provider.name} app setup ↗`;
+  byId("social-setup-guidance").textContent = `${provider.needs} After registration, add the client ID and secret to Cloudflare Worker secrets. Chatbliz authorization remains off until the credentials and callback are configured and tested.`;
 });
 
 function renderTask(task) {
