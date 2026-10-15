@@ -31,6 +31,16 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     assert.equal(health.status, 200, healthText);
     assert.deepEqual(JSON.parse(healthText), { ok: true, storage: "connected" });
 
+    const invalidSignup = await dispatch(`${base}/api/auth/signup`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ displayName: "x".repeat(81), email: "valid@example.com", password: "A-strong-password-81" })
+    });
+    assert.equal(invalidSignup.status, 400);
+    const invalidLogin = await dispatch(`${base}/api/auth/login`, {
+      method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.5" },
+      body: JSON.stringify({ email: "x".repeat(255), password: "not-the-password" })
+    });
+    assert.equal(invalidLogin.status, 400);
     const signup = await dispatch(`${base}/api/auth/signup`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -60,6 +70,7 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
       body: JSON.stringify({ displayName: "Bonga Bhengu", businessName: "x".repeat(17_000) })
     });
     assert.equal(oversized.status, 413);
+
     const passwordRecord = await database.prepare("SELECT password_hash, password_salt, password_iterations FROM users WHERE id = ?")
       .bind(signedUp.user.id).first();
     assert.notEqual(passwordRecord.password_hash, "A-strong-password-81");
@@ -148,21 +159,31 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     for (let attempt = 0; attempt < 10; attempt++) {
       const denied = await dispatch(`${base}/api/auth/login`, {
         method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.99" },
-        body: JSON.stringify({ email: "unknown@example.com", password: "not-the-password" })
+        body: JSON.stringify({ email: "Bonga@example.com", password: "not-the-password" })
       });
       assert.equal(denied.status, 401);
     }
     const rateLimited = await dispatch(`${base}/api/auth/login`, {
       method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.99" },
-      body: JSON.stringify({ email: "unknown@example.com", password: "not-the-password" })
+      body: JSON.stringify({ email: "Bonga@example.com", password: "not-the-password" })
     });
     assert.equal(rateLimited.status, 429);
+    const loginFromAnotherIp = await dispatch(`${base}/api/auth/login`, {
+      method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.100" },
+      body: JSON.stringify({ email: "Bonga@example.com", password: "A-strong-password-81" })
+    });
+    assert.equal(loginFromAnotherIp.status, 200);
 
     const secondSignup = await dispatch(`${base}/api/auth/signup`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ displayName: "Second Owner", email: "second@example.com", password: "Another-strong-password-82" })
     });
     const secondCookie = secondSignup.headers.get("set-cookie")?.split(";", 1)[0];
+    const invalidTaskReference = await dispatch(`${base}/api/tasks`, {
+      method: "POST", headers: { cookie: secondCookie, "content-type": "application/json" },
+      body: JSON.stringify({ title: "Task with invalid source id", sourceMessageId: "x".repeat(81) })
+    });
+    assert.equal(invalidTaskReference.status, 400);
     const secondOwnerTasks = await mf.dispatchFetch(`${base}/api/tasks`, { headers: { cookie: secondCookie } });
     assert.deepEqual((await secondOwnerTasks.json()).tasks, []);
     const secondOwnerBuilds = await mf.dispatchFetch(`${base}/api/builds`, { headers: { cookie: secondCookie } });
