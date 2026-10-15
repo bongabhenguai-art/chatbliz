@@ -33,6 +33,7 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const cookie = signup.headers.get("set-cookie")?.split(";", 1)[0];
     assert.ok(cookie?.startsWith("chatbliz_session="));
     assert.match(signup.headers.get("set-cookie"), /HttpOnly/u);
+    assert.match(signup.headers.get("set-cookie"), /Max-Age=31536000/u);
     const signedUp = await signup.json();
     assert.equal(signedUp.user.email, "bonga@example.com");
     const passwordRecord = await database.prepare("SELECT password_hash, password_salt, password_iterations FROM users WHERE id = ?")
@@ -62,6 +63,9 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     });
     assert.equal(profileSave.status, 200);
     assert.equal((await profileSave.json()).profile.businessName, "Phalamende Meal Palace");
+    assert.match(profileSave.headers.get("set-cookie"), /Max-Age=31536000/u);
+    const refreshedSession = await database.prepare("SELECT expires_at FROM sessions WHERE user_id = ?").bind(signedUp.user.id).first();
+    assert.ok(Date.parse(refreshedSession.expires_at) > Date.now() + 364 * 24 * 60 * 60 * 1000);
     const profileRead = await mf.dispatchFetch(`${base}/api/me`, { headers: { cookie } });
     assert.equal((await profileRead.json()).profile.businessName, "Phalamende Meal Palace");
 
