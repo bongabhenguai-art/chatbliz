@@ -5,7 +5,7 @@ import { PARTNERS, preparePlan } from "../public/src/domain.mjs";
 const SESSION_SECONDS = 60 * 60 * 24 * 365;
 const PASSWORD_ITERATIONS = 120_000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
-const LOGIN_LIMIT = 10;
+const LOGIN_IP_LIMIT = 10;
 const MAX_JSON_BYTES = 16_384;
 const DUMMY_PASSWORD_RECORD = {
   password_hash: base64url(new Uint8Array(32)),
@@ -202,8 +202,11 @@ async function handleApi(request, env) {
   if (pathname === "/api/auth/signup" && method === "POST") {
     let input;
     try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
-    const displayName = limitedText(input.displayName, 80, "Name");
-    const email = limitedText(input.email, 254, "Email").toLowerCase();
+    let displayName, email;
+    try {
+      displayName = limitedText(input.displayName, 80, "Name");
+      email = limitedText(input.email, 254, "Email").toLowerCase();
+    } catch (error) { return fail(error.message); }
     const password = String(input.password ?? "");
     if (displayName.length < 2) return fail("Enter your name.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) return fail("Enter a valid email address.");
@@ -247,25 +250,29 @@ async function handleApi(request, env) {
   if (pathname === "/api/auth/login" && method === "POST") {
     let input;
     try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
-    const email = limitedText(input.email, 254, "Email").toLowerCase();
+    let email;
+    try { email = limitedText(input.email, 254, "Email").toLowerCase(); }
+    catch (error) { return fail(error.message); }
     const password = String(input.password ?? "");
-    const ip = request.headers.get("cf-connecting-ip") || "unknown";
-    const actorHashes = [await sha256(`email:${email}`), await sha256(`ip:${ip}`)];
+    const ip = request.headers.get("cf-connecting-ip")?.trim();
+    if (!ip || ip.length > 64) return fail("Sign-in is temporarily unavailable. Please try again.", 503);
+    const emailHash = await sha256(`email:${email}`);
+    const ipHash = await sha256(`ip:${ip}`);
     const cutoff = new Date(Date.now() - LOGIN_WINDOW_MS).toISOString();
     const attempts = await env.DB.prepare(`SELECT COUNT(*) AS count FROM login_attempts
-      WHERE (email_hash = ? OR ip_hash = ?) AND attempted_at > ?`).bind(actorHashes[0], actorHashes[1], cutoff).first();
-    if ((attempts?.count || 0) >= LOGIN_LIMIT) return fail("Too many sign-in attempts. Wait 15 minutes and try again.", 429);
+      WHERE ip_hash = ? AND attempted_at > ?`).bind(ipHash, cutoff).first();
+    if ((attempts?.count || 0) >= LOGIN_IP_LIMIT) return fail("Too many sign-in attempts from this device. Wait 15 minutes and try again.", 429);
     const found = await env.DB.prepare("SELECT id, email, display_name, password_hash, password_salt, password_iterations FROM users WHERE email = ?")
       .bind(email).first();
     const valid = password.length <= 256 && await verifyPassword(password, found || DUMMY_PASSWORD_RECORD);
     if (!found || !valid) {
       const now = new Date().toISOString();
       await env.DB.prepare("INSERT INTO login_attempts (id, email_hash, ip_hash, attempted_at) VALUES (?, ?, ?, ?)")
-        .bind(crypto.randomUUID(), actorHashes[0], actorHashes[1], now).run();
+        .bind(crypto.randomUUID(), emailHash, ipHash, now).run();
       await env.DB.prepare("DELETE FROM login_attempts WHERE attempted_at < ?").bind(cutoff).run();
       return fail("Email or password is incorrect.", 401);
     }
-    await env.DB.prepare("DELETE FROM login_attempts WHERE email_hash = ?").bind(actorHashes[0]).run();
+    await env.DB.prepare("DELETE FROM login_attempts WHERE email_hash = ?").bind(emailHash).run();
     const cookie = await newSession(env.DB, found.id, request);
     return json({ user: { id: found.id, email: found.email, displayName: found.display_name } }, 200, { "set-cookie": cookie });
   }
@@ -416,12 +423,15 @@ async function handleApi(request, env) {
   if (pathname === "/api/tasks" && method === "POST") {
     let input;
     try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
-    let title;
-    try { title = limitedText(input.title, 240, "Task"); } catch (error) { return fail(error.message); }
+    let title, sourceMessageId;
+    try {
+      title = limitedText(input.title, 240, "Task");
+      sourceMessageId = limitedText(input.sourceMessageId, 80, "Message ID");
+    } catch (error) { return fail(error.message); }
     if (!title) return fail("Task title is required.");
     const id = crypto.randomUUID();
     await env.DB.prepare("INSERT INTO tasks (id, user_id, title, source_message_id) VALUES (?, ?, ?, ?)")
-      .bind(id, user.id, title, limitedText(input.sourceMessageId, 80, "Message ID")).run();
+      .bind(id, user.id, title, sourceMessageId).run();
     const saved = await env.DB.prepare("SELECT id, title, status, created_at FROM tasks WHERE id = ? AND user_id = ?")
       .bind(id, user.id).first();
     if (!saved) return fail("The task did not verify in Chatbliz storage.", 500);
