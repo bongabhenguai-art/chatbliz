@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../public/src/domain.mjs";
+import { BUSINESS_STAGES, PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../public/src/domain.mjs";
 
 test("the four product workspaces and six partners are present", () => {
   assert.deepEqual(PRODUCTS.map(item => item.id), ["business", "brand", "website", "content"]);
@@ -50,4 +50,36 @@ test("an underspecified business problem asks for context without inventing a ca
   assert.equal(result.solution.area, "Business planning");
   assert.match(result.solution.assessment, /need the business problem/);
   assert.ok(result.solution.questions.length <= 2);
+});
+
+test("stage-aware plans cover rebuilding, starting, building and growing", () => {
+  const cases = [
+    ["I am rebuilding my business after a setback", "rebuilding", /resources/i],
+    ["I am starting a business", "starting", /customer group/i],
+    ["I am building my business", "building", /customer journey/i],
+    ["I am growing my business", "growing", /capacity/i]
+  ];
+  assert.deepEqual(BUSINESS_STAGES.map(stage => stage.id), ["rebuilding", "starting", "building", "growing"]);
+  for (const [message, id, firstStep] of cases) {
+    const result = preparePlan(message);
+    assert.equal(result.stage.id, id);
+    assert.match(result.response, new RegExp(`${id}`, "i"));
+    assert.match(result.stage.firstStep, firstStep);
+    assert.ok(result.stage.measure.length > 20);
+    assert.match(result.response, /No external action has been taken/);
+  }
+});
+
+test("stage-aware problem plans show their stage guidance alongside the diagnosis", () => {
+  const result = preparePlan("I am rebuilding after a setback and need more customers");
+  assert.equal(result.stage.id, "rebuilding");
+  assert.equal(result.solution.area, "Lead flow and sales");
+  assert.match(result.stage.focus, /restore reliable customer activity/);
+});
+
+test("the founder case study does not claim that owner memories trained the planner", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const html = await readFile(new URL("../public/index.html", import.meta.url), "utf8");
+  assert.match(html, /FOUNDING CASE STUDY/);
+  assert.match(html, /has not been trained on Bonga’s story/);
 });
