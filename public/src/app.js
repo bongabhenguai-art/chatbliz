@@ -168,6 +168,8 @@ function showTechnicalDesk() {
   byId("developer-desk").hidden = true;
   byId("technical-repair").hidden = false;
   byId("app-shell").classList.add("technical-mode");
+  byId("app-shell").classList.remove("studio-mode");
+  byId("studio-desk").hidden = true;
   document.querySelector("[data-technical-nav]").classList.add("active");
   byId("active-workspace-label").textContent = "TECHNICAL REPAIR";
   byId("workspace-title").textContent = "Check and repair Chatbliz";
@@ -179,10 +181,172 @@ function setWorkspace(product) {
   document.querySelector("[data-technical-nav]").classList.remove("active");
   byId("technical-repair").hidden = true;
   byId("app-shell").classList.remove("technical-mode");
+  byId("app-shell").classList.toggle("studio-mode", product.id === "content");
   byId("active-workspace-label").textContent = product.name.toUpperCase();
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
   byId("developer-desk").hidden = product.id !== "website";
+  byId("studio-desk").hidden = product.id !== "content";
 }
+
+let studioCameraStream = null;
+let studioPreviewSource = null;
+let studioProgramSource = null;
+let studioRecorder = null;
+let studioRecordedChunks = [];
+const studioMessage = byId("studio-message");
+
+function setStudioMessage(message) {
+  studioMessage.textContent = message;
+}
+
+function showStudioSource(slot, source) {
+  const video = byId(`studio-${slot}-video`);
+  const image = byId(`studio-${slot}-image`);
+  const empty = byId(`studio-${slot}-empty`);
+  video.pause();
+  video.srcObject = null;
+  video.removeAttribute("src");
+  image.removeAttribute("src");
+  video.hidden = true;
+  image.hidden = true;
+  empty.hidden = Boolean(source);
+  if (!source) return;
+  if (source.kind === "image") {
+    image.src = source.url;
+    image.hidden = false;
+  } else {
+    video.srcObject = source.stream || null;
+    if (source.url) video.src = source.url;
+    video.loop = source.kind === "video";
+    video.hidden = false;
+    video.play().catch(() => setStudioMessage("Browser blocked playback. Press play on the video preview to continue."));
+  }
+}
+
+function refreshStudioControls() {
+  byId("studio-take").disabled = !studioPreviewSource;
+  byId("studio-record").disabled = !studioProgramSource || studioProgramSource.kind === "image" || !window.MediaRecorder;
+  byId("studio-camera-health").textContent = studioCameraStream?.active ? "Camera on" : "Camera off";
+  byId("studio-program-source").textContent = studioProgramSource?.label || "No program source";
+  byId("studio-status").lastChild.textContent = studioRecorder?.state === "recording" ? " Recording locally" : " Local studio · not broadcasting";
+}
+
+byId("studio-camera").addEventListener("click", async () => {
+  if (studioCameraStream?.active) {
+    studioCameraStream.getTracks().forEach(track => track.stop());
+    studioCameraStream = null;
+    if (studioPreviewSource?.kind === "camera") {
+      studioPreviewSource = null;
+      showStudioSource("preview", null);
+    }
+    if (studioProgramSource?.kind === "camera") {
+      studioProgramSource = null;
+      showStudioSource("program", null);
+    }
+    byId("studio-camera").textContent = "Start camera";
+    setStudioMessage("Camera stopped. No camera input is being shared with this studio.");
+    refreshStudioControls();
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setStudioMessage("Camera access requires HTTPS and a browser that supports media capture.");
+    return;
+  }
+  byId("studio-camera").disabled = true;
+  try {
+    studioCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    studioPreviewSource = { kind: "camera", stream: studioCameraStream, label: "Browser camera" };
+    showStudioSource("preview", studioPreviewSource);
+    byId("studio-camera").textContent = "Stop camera";
+    setStudioMessage("Camera preview is running in this browser. Use Take to send it to the local program monitor.");
+  } catch (error) {
+    setStudioMessage(error.name === "NotAllowedError" ? "Camera permission was denied. Allow camera access in your browser settings and retry." : "Camera could not start. Check that a camera is connected and not in use by another app.");
+  } finally {
+    byId("studio-camera").disabled = false;
+    refreshStudioControls();
+  }
+});
+
+byId("studio-media-file").addEventListener("change", event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const kind = file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : null;
+  if (!kind) {
+    setStudioMessage("Choose a supported image or video file.");
+    event.target.value = "";
+    return;
+  }
+  studioPreviewSource = { kind, url: URL.createObjectURL(file), label: file.name };
+  showStudioSource("preview", studioPreviewSource);
+  setStudioMessage(`${file.name} is loaded in the preview. Media stays in this browser and is not uploaded.`);
+  refreshStudioControls();
+});
+
+byId("studio-take").addEventListener("click", () => {
+  if (!studioPreviewSource) return;
+  studioProgramSource = studioPreviewSource;
+  showStudioSource("program", studioProgramSource);
+  setStudioMessage(`Program switched to ${studioProgramSource.label}. This is a local monitor output, not a public live stream.`);
+  refreshStudioControls();
+});
+
+byId("studio-record").addEventListener("click", () => {
+  const button = byId("studio-record");
+  if (studioRecorder?.state === "recording") {
+    studioRecorder.stop();
+    button.textContent = "● Record";
+    return;
+  }
+  const video = byId("studio-program-video");
+  const capture = video.captureStream || video.mozCaptureStream;
+  if (!capture) {
+    setStudioMessage("This browser cannot record the program video. Try a current version of Chrome, Edge or Firefox.");
+    return;
+  }
+  try {
+    studioRecordedChunks = [];
+    studioRecorder = new MediaRecorder(capture.call(video));
+    studioRecorder.addEventListener("dataavailable", event => { if (event.data.size) studioRecordedChunks.push(event.data); });
+    studioRecorder.addEventListener("stop", () => {
+      const blob = new Blob(studioRecordedChunks, { type: studioRecorder.mimeType || "video/webm" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `chatbliz-studio-${new Date().toISOString().replaceAll(":", "-")}.webm`;
+      link.click();
+      setStudioMessage("Local recording downloaded to your device. It was not uploaded or published.");
+      byId("studio-record-health").textContent = "Recording downloaded";
+      refreshStudioControls();
+    });
+    studioRecorder.start();
+    button.textContent = "■ Stop & save";
+    byId("studio-record-health").textContent = "Recording locally";
+    setStudioMessage("Recording program output in this browser. Stop & save downloads a WebM file to your device.");
+    refreshStudioControls();
+  } catch {
+    setStudioMessage("Recording could not start for this source in your browser.");
+  }
+});
+
+document.querySelectorAll("[data-studio-action]").forEach(button => button.addEventListener("click", () => {
+  const action = button.dataset.studioAction;
+  const guidance = {
+    Cameras: "Camera preview uses your browser camera permission. Multi-camera switching is not connected yet.",
+    Audio: "Audio mixing and microphone routing are not connected yet. Camera preview currently requests video only.",
+    Lighting: "Lighting controls require compatible connected hardware; none is configured in this workspace.",
+    Scenes: "For this session, use Add media to load a scene image or video into Preview.",
+    "AI Director": "AI Director is not connected yet. No automated production decisions are running.",
+    Graphics: "Graphics overlays are not connected yet.",
+    Sponsors: "Sponsor assets and sponsor management are not connected yet.",
+    Chat: "Studio chat is not connected yet. Use the Chatbliz conversation in My Business."
+  };
+  setStudioMessage(guidance[action] || `${action} is not configured yet.`);
+}));
+
+byId("studio-go-live").addEventListener("click", () => setStudioMessage("Live streaming is not configured. Connect and test a streaming provider before using Go Live."));
+
+window.addEventListener("beforeunload", () => {
+  studioCameraStream?.getTracks().forEach(track => track.stop());
+});
 
 document.querySelectorAll("[data-journey-workspace]").forEach(button => {
   button.addEventListener("click", () => {

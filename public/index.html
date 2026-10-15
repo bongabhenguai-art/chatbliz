@@ -110,6 +110,45 @@
           <aside class="founder-case"><p class="eyebrow">THE FOUNDING CASE STUDY</p><p>Chatbliz grows from Bonga Bhengu’s rebuild after losing business assets in the 2021 unrest: moving through food and construction work, then teaching himself AI from 2023. That experience shapes practical support for owners rebuilding, starting, building and growing. The app uses explicit planning rules and saved owner-entered project lessons; it has not been trained on Bonga’s story.</p></aside>
         </section>
 
+        <section id="studio-desk" class="studio-desk" aria-labelledby="studio-title" hidden>
+          <header class="studio-topbar">
+            <div><p class="eyebrow">CHATBLIZ STUDIO</p><h2 id="studio-title">Broadcast Studio</h2></div>
+            <span id="studio-status" class="studio-status"><i></i> Local studio · not broadcasting</span>
+          </header>
+          <div class="studio-monitors">
+            <section class="studio-monitor preview-monitor" aria-label="Preview monitor">
+              <div class="monitor-heading"><div><strong>PREVIEW</strong><small>Choose a camera or local media</small></div><span>STANDBY</span></div>
+              <div class="monitor-screen"><video id="studio-preview-video" playsinline muted hidden></video><img id="studio-preview-image" alt="Selected preview" hidden><div id="studio-preview-empty" class="monitor-empty"><span>◉</span><strong>Preview source</strong><small>Start a camera or add a local image/video</small></div><span class="monitor-label">PREVIEW</span></div>
+              <div class="monitor-controls"><button id="studio-camera" class="studio-mini" type="button">Start camera</button><label class="studio-mini file-button" for="studio-media-file">Add media</label><input id="studio-media-file" type="file" accept="image/*,video/*"></div>
+            </section>
+            <div class="studio-switcher"><button id="studio-take" class="take-button" type="button" disabled><span>TAKE</span><b>→</b></button><small>Switch preview to program</small></div>
+            <section class="studio-monitor program-monitor" aria-label="Program output monitor">
+              <div class="monitor-heading"><div><strong>PROGRAM</strong><small>Output sent to local recording</small></div><span class="program-indicator">PROGRAM</span></div>
+              <div class="monitor-screen"><video id="studio-program-video" playsinline muted hidden></video><img id="studio-program-image" alt="Program output" hidden><div id="studio-program-empty" class="monitor-empty"><span>◉</span><strong>Program output</strong><small>Take a preview source to put it here</small></div><span class="monitor-label">PROGRAM</span></div>
+              <div class="monitor-controls"><span id="studio-program-source" class="source-label">No program source</span><button id="studio-record" class="studio-mini record-button" type="button" disabled>● Record</button></div>
+            </section>
+          </div>
+          <section class="studio-operations" aria-labelledby="studio-operations-title">
+            <div class="studio-section-title"><h3 id="studio-operations-title">OPERATIONS</h3><span>Compact controls · current browser session</span></div>
+            <div class="studio-action-grid">
+              <button type="button" class="studio-action" data-studio-action="Cameras">◉<span>Cameras</span></button>
+              <button type="button" class="studio-action" data-studio-action="Audio">♫<span>Audio</span></button>
+              <button type="button" class="studio-action" data-studio-action="Lighting">☼<span>Lighting</span></button>
+              <button type="button" class="studio-action" data-studio-action="Scenes">▧<span>Scenes</span></button>
+              <button type="button" class="studio-action" data-studio-action="AI Director">✧<span>AI Director</span></button>
+              <button type="button" class="studio-action" data-studio-action="Graphics">▣<span>Graphics</span></button>
+              <button type="button" class="studio-action" data-studio-action="Sponsors">♧<span>Sponsors</span></button>
+              <button type="button" class="studio-action" data-studio-action="Chat">☏<span>Chat</span></button>
+            </div>
+            <p id="studio-message" class="studio-message" role="status">Add a camera or local media. Program output stays on this device; streaming services are not connected.</p>
+          </section>
+          <footer class="studio-footer">
+            <div class="studio-health"><span><i></i><b id="studio-camera-health">Camera off</b></span><span><i></i><b>Local session</b></span><span><i></i><b id="studio-record-health">Not recording</b></span></div>
+            <button id="studio-go-live" class="studio-live" type="button" title="Streaming is not connected">Go Live <small>Not connected</small></button>
+            <span class="studio-output-note">Broadcast provider not configured</span>
+          </footer>
+        </section>
+
         <section id="developer-desk" class="developer-desk" aria-labelledby="developer-title" hidden>
           <div class="section-heading"><div><p class="eyebrow">MY WEBSITE &amp; APP · DEVELOPER INTERFACE</p><h2 id="developer-title">Build for each customer</h2></div><span class="muted-label">One sign-in · separate project memory</span></div>
           <p class="developer-intro">Sign in once, create a separate build brief for each customer business, and use the same four-workspace loop to shape its brand, website or app, content and operations. Save customer feedback as a project lesson; Chatbliz can include that lesson in the next build prompt.</p>
