@@ -1,6 +1,8 @@
 import { PARTNERS, preparePlan } from "../public/src/domain.mjs";
 
-const SESSION_SECONDS = 60 * 60 * 24 * 30;
+// Keep active owner devices signed in. Each successful API request renews this
+// one-year cookie and its D1 expiry; signing out revokes the session immediately.
+const SESSION_SECONDS = 60 * 60 * 24 * 365;
 const PASSWORD_ITERATIONS = 120_000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT = 10;
@@ -406,13 +408,36 @@ async function handleApi(request, env) {
   return fail("This Chatbliz endpoint was not found.", 404);
 }
 
+async function renewActiveSession(request, env, response) {
+  if (response.status === 401 || new URL(request.url).pathname === "/api/auth/logout") return response;
+  const token = cookieValue(request, "chatbliz_session");
+  if (!token || token.length > 100) return response;
+  const tokenHash = await sha256(token);
+  const now = new Date().toISOString();
+  const session = await env.DB.prepare("SELECT token_hash FROM sessions WHERE token_hash = ? AND expires_at > ?")
+    .bind(tokenHash, now).first();
+  if (!session) return response;
+  const expiresAt = new Date(Date.now() + SESSION_SECONDS * 1000).toISOString();
+  try {
+    await env.DB.prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?")
+      .bind(expiresAt, tokenHash).run();
+  } catch {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
+  headers.set("set-cookie", `chatbliz_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_SECONDS}${secure}`);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { "allow": "GET, POST, PUT, PATCH, OPTIONS" } });
       try {
-        return await handleApi(request, env);
+        const response = await handleApi(request, env);
+        return await renewActiveSession(request, env, response);
       } catch (error) {
         console.error("Chatbliz request failed", error?.message || "unknown error");
         return fail("Chatbliz could not complete that request. Please try again.", 500);
