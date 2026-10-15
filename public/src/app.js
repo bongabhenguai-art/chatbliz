@@ -224,6 +224,15 @@ let studioPreviewSource = null;
 let studioProgramSource = null;
 let studioRecorder = null;
 let studioRecordedChunks = [];
+const studioSources = new Map();
+let studioMicStream = null;
+let studioAudioContext = null;
+let studioMicGain = null;
+let studioAudioDestination = null;
+let studioAudioAnalyser = null;
+let studioAudioFrame = null;
+let studioAutoCutTimer = null;
+let studioMicMuted = false;
 const studioMessage = byId("studio-message");
 
 function setStudioMessage(message) {
@@ -254,16 +263,128 @@ function showStudioSource(slot, source) {
   }
 }
 
+function updateSourceOptions(selectedId = "") {
+  const select = byId("studio-source-select");
+  const current = selectedId || select.value;
+  select.replaceChildren(new Option(studioSources.size ? "Choose source…" : "No sources", ""));
+  for (const [id, source] of studioSources) select.add(new Option(source.label, id));
+  select.disabled = studioSources.size === 0;
+  if (current && studioSources.has(current)) select.value = current;
+  else if (studioPreviewSource) select.value = [...studioSources].find(([, source]) => source === studioPreviewSource)?.[0] || "";
+}
+
+function selectStudioPreview(id) {
+  studioPreviewSource = studioSources.get(id) || null;
+  showStudioSource("preview", studioPreviewSource);
+  byId("studio-switcher-help").textContent = studioPreviewSource ? `Ready: ${studioPreviewSource.label}` : "Choose a source for preview";
+  refreshStudioControls();
+}
+
+function stopStudioMic() {
+  if (studioAudioFrame !== null) cancelAnimationFrame(studioAudioFrame);
+  studioAudioFrame = null;
+  studioMicStream?.getTracks().forEach(track => track.stop());
+  studioMicStream = null;
+  studioMicGain?.disconnect();
+  studioAudioAnalyser?.disconnect();
+  studioMicGain = null;
+  studioAudioAnalyser = null;
+  studioAudioDestination?.stream.getTracks().forEach(track => track.stop());
+  studioAudioDestination = null;
+  studioAudioContext?.close().catch(() => {});
+  studioAudioContext = null;
+  byId("studio-mic-toggle").textContent = "Connect mic";
+  byId("studio-mic-select").disabled = false;
+  byId("studio-mic-mute").disabled = true;
+  byId("studio-mic-mute").textContent = "Mute mic";
+  studioMicMuted = false;
+  byId("studio-mic-gain").disabled = true;
+  byId("studio-audio-state").textContent = "Mic not connected";
+  byId("studio-audio-level").style.setProperty("--level", "0%");
+}
+
+async function populateStudioDevices() {
+  if (!navigator.mediaDevices?.enumerateDevices) return;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const video = devices.filter(device => device.kind === "videoinput");
+    const audio = devices.filter(device => device.kind === "audioinput");
+    const cameraSelect = byId("studio-camera-select");
+    const cameraValue = cameraSelect.value;
+    cameraSelect.replaceChildren(new Option("Default camera", ""));
+    video.forEach((device, index) => cameraSelect.add(new Option(device.label || `Camera ${index + 1}`, device.deviceId)));
+    if (cameraValue && video.some(device => device.deviceId === cameraValue)) cameraSelect.value = cameraValue;
+    const micSelect = byId("studio-mic-select");
+    const micValue = micSelect.value;
+    micSelect.replaceChildren(new Option(audio.length ? "Choose microphone…" : "No microphone found", ""));
+    audio.forEach((device, index) => micSelect.add(new Option(device.label || `Microphone ${index + 1}`, device.deviceId)));
+    if (micValue && audio.some(device => device.deviceId === micValue)) micSelect.value = micValue;
+    updateSourceOptions(byId("studio-source-select").value);
+  } catch {
+    setStudioMessage("Browser could not list media devices. Check device permissions and retry.");
+  }
+}
+
+function drawStudioAudioMeter() {
+  if (!studioAudioAnalyser) return;
+  const samples = new Uint8Array(studioAudioAnalyser.fftSize);
+  studioAudioAnalyser.getByteTimeDomainData(samples);
+  let peak = 0;
+  for (const sample of samples) peak = Math.max(peak, Math.abs(sample - 128) / 128);
+  byId("studio-audio-level").style.setProperty("--level", `${Math.min(100, Math.round(peak * 180))}%`);
+  if (peak > 0.94) byId("studio-audio-state").textContent = "Clipping risk · lower mic gain";
+  else if (studioMicStream) byId("studio-audio-state").textContent = studioMicMuted ? "Mic muted" : "Mic connected · included in next recording";
+  studioAudioFrame = requestAnimationFrame(drawStudioAudioMeter);
+}
+
+function stopStudioAutoCut(message = "Auto cut stopped because its source changed.") {
+  if (!studioAutoCutTimer) return;
+  clearInterval(studioAutoCutTimer);
+  studioAutoCutTimer = null;
+  byId("studio-auto-cut").setAttribute("aria-pressed", "false");
+  byId("studio-auto-cut").textContent = "Auto cut";
+  setStudioMessage(message);
+}
+
 function refreshStudioControls() {
   byId("studio-take").disabled = !studioPreviewSource;
   byId("studio-record").disabled = !studioProgramSource || studioProgramSource.kind === "image" || !window.MediaRecorder;
   byId("studio-camera-health").textContent = studioCameraStream?.active ? "Camera on" : "Camera off";
   byId("studio-program-source").textContent = studioProgramSource?.label || "No program source";
   byId("studio-status").lastChild.textContent = studioRecorder?.state === "recording" ? " Recording locally" : " Local studio · not broadcasting";
+  byId("studio-auto-cut").disabled = studioSources.size < 2;
+  byId("studio-switcher-help").textContent = studioAutoCutTimer ? "Auto cut running · press to stop" : studioSources.size < 2 ? "Add a second source to use auto cut" : studioPreviewSource ? `Ready: ${studioPreviewSource.label}` : "Choose a source for preview";
+}
+
+async function startStudioCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setStudioMessage("Camera access requires HTTPS and a browser that supports media capture.");
+    return;
+  }
+  byId("studio-camera").disabled = true;
+  try {
+    const deviceId = byId("studio-camera-select").value;
+    studioCameraStream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { deviceId: { exact: deviceId } } : true, audio: false });
+    const track = studioCameraStream.getVideoTracks()[0];
+    const label = track?.label || "Browser camera";
+    studioSources.set("camera", { kind: "camera", stream: studioCameraStream, label, deviceId: track?.getSettings().deviceId || "" });
+    updateSourceOptions("camera");
+    selectStudioPreview("camera");
+    byId("studio-camera").textContent = "Stop camera";
+    setStudioMessage("Camera preview is running in this browser. Use Take / Cut to send it to the local program monitor.");
+  } catch (error) {
+    studioCameraStream = null;
+    setStudioMessage(error.name === "NotAllowedError" ? "Camera permission was denied. Allow camera access in your browser settings and retry." : "Camera could not start. Check that a camera is connected and not in use by another app.");
+  } finally {
+    byId("studio-camera").disabled = false;
+    await populateStudioDevices();
+    refreshStudioControls();
+  }
 }
 
 byId("studio-camera").addEventListener("click", async () => {
   if (studioCameraStream?.active) {
+    stopStudioAutoCut();
     studioCameraStream.getTracks().forEach(track => track.stop());
     studioCameraStream = null;
     if (studioPreviewSource?.kind === "camera") {
@@ -274,29 +395,28 @@ byId("studio-camera").addEventListener("click", async () => {
       studioProgramSource = null;
       showStudioSource("program", null);
     }
+    studioSources.delete("camera");
+    updateSourceOptions();
     byId("studio-camera").textContent = "Start camera";
     setStudioMessage("Camera stopped. No camera input is being shared with this studio.");
     refreshStudioControls();
     return;
   }
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setStudioMessage("Camera access requires HTTPS and a browser that supports media capture.");
-    return;
-  }
-  byId("studio-camera").disabled = true;
-  try {
-    studioCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    studioPreviewSource = { kind: "camera", stream: studioCameraStream, label: "Browser camera" };
-    showStudioSource("preview", studioPreviewSource);
-    byId("studio-camera").textContent = "Stop camera";
-    setStudioMessage("Camera preview is running in this browser. Use Take to send it to the local program monitor.");
-  } catch (error) {
-    setStudioMessage(error.name === "NotAllowedError" ? "Camera permission was denied. Allow camera access in your browser settings and retry." : "Camera could not start. Check that a camera is connected and not in use by another app.");
-  } finally {
-    byId("studio-camera").disabled = false;
-    refreshStudioControls();
-  }
+  await startStudioCamera();
 });
+
+byId("studio-camera-select").addEventListener("change", async () => {
+  if (!studioCameraStream?.active) return;
+  stopStudioAutoCut("Auto cut stopped while changing camera.");
+  studioCameraStream.getTracks().forEach(track => track.stop());
+  studioCameraStream = null;
+  studioSources.delete("camera");
+  if (studioPreviewSource?.kind === "camera") { studioPreviewSource = null; showStudioSource("preview", null); }
+  if (studioProgramSource?.kind === "camera") { studioProgramSource = null; showStudioSource("program", null); }
+  await startStudioCamera();
+});
+
+byId("studio-source-select").addEventListener("change", event => selectStudioPreview(event.target.value));
 
 byId("studio-media-file").addEventListener("change", event => {
   const file = event.target.files?.[0];
@@ -307,8 +427,11 @@ byId("studio-media-file").addEventListener("change", event => {
     event.target.value = "";
     return;
   }
-  studioPreviewSource = { kind, url: URL.createObjectURL(file), label: file.name };
-  showStudioSource("preview", studioPreviewSource);
+  const old = studioSources.get("media");
+  if (old?.url?.startsWith("blob:")) URL.revokeObjectURL(old.url);
+  studioSources.set("media", { kind, url: URL.createObjectURL(file), label: file.name });
+  updateSourceOptions("media");
+  selectStudioPreview("media");
   setStudioMessage(`${file.name} is loaded in the preview. Media stays in this browser and is not uploaded.`);
   refreshStudioControls();
 });
@@ -319,6 +442,97 @@ byId("studio-take").addEventListener("click", () => {
   showStudioSource("program", studioProgramSource);
   setStudioMessage(`Program switched to ${studioProgramSource.label}. This is a local monitor output, not a public live stream.`);
   refreshStudioControls();
+});
+
+byId("studio-auto-cut").addEventListener("click", () => {
+  if (studioAutoCutTimer) {
+    stopStudioAutoCut("Auto cut stopped. Program remains on its current source.");
+    refreshStudioControls();
+    return;
+  }
+  const sources = [...studioSources.values()].filter(source => source.kind !== "image");
+  if (sources.length < 2) {
+    setStudioMessage("Auto cut needs two moving sources. Connect the camera and load a video source first.");
+    return;
+  }
+  let index = Math.max(0, sources.indexOf(studioProgramSource));
+  studioProgramSource = sources[index];
+  showStudioSource("program", studioProgramSource);
+  studioAutoCutTimer = setInterval(() => {
+    index = (index + 1) % sources.length;
+    studioProgramSource = sources[index];
+    showStudioSource("program", studioProgramSource);
+    byId("studio-program-source").textContent = studioProgramSource.label;
+    setStudioMessage(`Auto cut switched local program to ${studioProgramSource.label}. This is not a public live stream.`);
+  }, 8000);
+  byId("studio-auto-cut").setAttribute("aria-pressed", "true");
+  byId("studio-auto-cut").textContent = "Stop auto";
+  setStudioMessage("Auto cut is switching between local video sources every 8 seconds. The program remains on this device.");
+  refreshStudioControls();
+});
+
+document.querySelector('[data-studio-action="Audio"]').addEventListener("click", async () => {
+  const panel = byId("studio-audio-panel");
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) await populateStudioDevices();
+});
+
+document.querySelector('[data-studio-action="Podcast"]').addEventListener("click", async () => {
+  const panel = byId("studio-audio-panel");
+  panel.hidden = false;
+  await populateStudioDevices();
+  setStudioMessage("Podcast mode uses the same local Preview/Program recording path. Connect a mic for audio; separate tracks, editing, cloud storage and podcast publishing are not connected.");
+  byId("studio-audio-panel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
+byId("studio-mic-toggle").addEventListener("click", async () => {
+  if (studioMicStream) {
+    stopStudioMic();
+    setStudioMessage("Microphone disconnected. New recordings will be video-only.");
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setStudioMessage("Microphone access requires HTTPS and a browser that supports media capture.");
+    return;
+  }
+  try {
+    const deviceId = byId("studio-mic-select").value;
+    studioMicStream = await navigator.mediaDevices.getUserMedia({ audio: deviceId ? { deviceId: { exact: deviceId }, echoCancellation: true, noiseSuppression: true } : { echoCancellation: true, noiseSuppression: true }, video: false });
+    const AudioContextType = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextType) throw new Error("Web Audio is not supported in this browser.");
+    studioAudioContext = new AudioContextType();
+    const inputNode = studioAudioContext.createMediaStreamSource(studioMicStream);
+    studioMicGain = studioAudioContext.createGain();
+    studioAudioAnalyser = studioAudioContext.createAnalyser();
+    studioAudioDestination = studioAudioContext.createMediaStreamDestination();
+    inputNode.connect(studioMicGain);
+    studioMicGain.connect(studioAudioAnalyser);
+    studioMicGain.connect(studioAudioDestination);
+    studioMicGain.gain.value = Number(byId("studio-mic-gain").value);
+    byId("studio-mic-toggle").textContent = "Disconnect mic";
+    byId("studio-mic-select").disabled = true;
+    byId("studio-mic-mute").disabled = false;
+    byId("studio-mic-gain").disabled = false;
+    byId("studio-audio-state").textContent = "Mic connected · included in next recording";
+    drawStudioAudioMeter();
+    setStudioMessage("Microphone connected. Its input is metered and will be included in new local recordings.");
+    await populateStudioDevices();
+  } catch (error) {
+    stopStudioMic();
+    setStudioMessage(error.name === "NotAllowedError" ? "Microphone permission was denied. Allow microphone access in browser settings and retry." : error.message || "Microphone could not start. Check the selected device and retry.");
+  }
+});
+
+byId("studio-mic-gain").addEventListener("input", event => {
+  if (studioMicGain) studioMicGain.gain.value = studioMicMuted ? 0 : Number(event.target.value);
+});
+
+byId("studio-mic-mute").addEventListener("click", () => {
+  if (!studioMicGain) return;
+  studioMicMuted = !studioMicMuted;
+  studioMicGain.gain.value = studioMicMuted ? 0 : Number(byId("studio-mic-gain").value);
+  byId("studio-mic-mute").textContent = studioMicMuted ? "Unmute mic" : "Mute mic";
+  byId("studio-audio-state").textContent = studioMicMuted ? "Mic muted" : "Mic connected · included in next recording";
 });
 
 byId("studio-record").addEventListener("click", () => {
@@ -336,7 +550,9 @@ byId("studio-record").addEventListener("click", () => {
   }
   try {
     studioRecordedChunks = [];
-    studioRecorder = new MediaRecorder(capture.call(video));
+    const recordingStream = capture.call(video);
+    if (studioAudioDestination) recordingStream.addTrack(studioAudioDestination.stream.getAudioTracks()[0].clone());
+    studioRecorder = new MediaRecorder(recordingStream);
     studioRecorder.addEventListener("dataavailable", event => { if (event.data.size) studioRecordedChunks.push(event.data); });
     studioRecorder.addEventListener("stop", () => {
       const blob = new Blob(studioRecordedChunks, { type: studioRecorder.mimeType || "video/webm" });
@@ -344,14 +560,15 @@ byId("studio-record").addEventListener("click", () => {
       link.href = URL.createObjectURL(blob);
       link.download = `chatbliz-studio-${new Date().toISOString().replaceAll(":", "-")}.webm`;
       link.click();
-      setStudioMessage("Local recording downloaded to your device. It was not uploaded or published.");
+      setStudioMessage(`Local ${studioMicStream ? "video and microphone audio" : "video-only"} recording downloaded to your device. It was not uploaded or published.`);
       byId("studio-record-health").textContent = "Recording downloaded";
+      button.textContent = "● Record";
       refreshStudioControls();
     });
     studioRecorder.start();
     button.textContent = "■ Stop & save";
     byId("studio-record-health").textContent = "Recording locally";
-    setStudioMessage("Recording program output in this browser. Stop & save downloads a WebM file to your device.");
+    setStudioMessage(`Recording program output ${studioMicStream ? "with microphone audio" : "without microphone audio"}. Stop & save downloads a WebM file to your device.`);
     refreshStudioControls();
   } catch {
     setStudioMessage("Recording could not start for this source in your browser.");
@@ -361,8 +578,8 @@ byId("studio-record").addEventListener("click", () => {
 document.querySelectorAll("[data-studio-action]").forEach(button => button.addEventListener("click", () => {
   const action = button.dataset.studioAction;
   const guidance = {
-    Cameras: "Camera preview uses your browser camera permission. Multi-camera switching is not connected yet.",
-    Audio: "Audio mixing and microphone routing are not connected yet. Camera preview currently requests video only.",
+    Cameras: "Allow camera access to add the current browser camera as a source. Use Preview source to switch among connected camera and local media sources.",
+    Audio: "Open the audio panel to connect a microphone, adjust its recording gain and check its input meter. This is a local browser mix.",
     Lighting: "Lighting controls require compatible connected hardware; none is configured in this workspace.",
     Scenes: "For this session, use Add media to load a scene image or video into Preview.",
     "AI Director": "AI Director is not connected yet. No automated production decisions are running.",
@@ -377,6 +594,9 @@ byId("studio-go-live").addEventListener("click", () => setStudioMessage("Live st
 
 window.addEventListener("beforeunload", () => {
   studioCameraStream?.getTracks().forEach(track => track.stop());
+  stopStudioMic();
+  if (studioAutoCutTimer) clearInterval(studioAutoCutTimer);
+  for (const source of studioSources.values()) if (source.url?.startsWith("blob:")) URL.revokeObjectURL(source.url);
 });
 
 document.querySelectorAll("[data-journey-workspace]").forEach(button => {
