@@ -1,12 +1,31 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BUSINESS_STAGES, PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../public/src/domain.mjs";
+import { BUSINESS_STAGES, OPERATING_MODULES, PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../public/src/domain.mjs";
 
-test("the four product workspaces and six partners are present", () => {
+test("the four product workspaces and twelve business partners are present", () => {
   assert.deepEqual(PRODUCTS.map(item => item.id), ["business", "brand", "website", "content"]);
-  assert.equal(PARTNERS.length, 6);
+  assert.equal(PARTNERS.length, 12);
   assert.equal(new Set(PARTNERS.map(item => item.id)).size, PARTNERS.length);
   assert.ok(PARTNERS.some(item => item.id === "problem_solver"));
+  assert.deepEqual(PARTNERS.filter(item => ["hunter", "fishing", "closer"].includes(item.id)).map(item => item.id), ["hunter", "fishing", "closer"]);
+});
+
+test("Bonga Bhengu OS business capabilities map into Chatbliz with honest readiness", () => {
+  assert.deepEqual(OPERATING_MODULES.map(item => item.id), ["discovery", "connections", "twin", "sales", "builder", "studio", "execution", "performance"]);
+  assert.equal(new Set(OPERATING_MODULES.map(item => item.id)).size, OPERATING_MODULES.length);
+  assert.match(OPERATING_MODULES.find(item => item.id === "twin").state, /profile.*tasks save/i);
+  assert.match(OPERATING_MODULES.find(item => item.id === "sales").state, /CRM not connected/i);
+  assert.match(OPERATING_MODULES.find(item => item.id === "studio").state, /local camera\/media preview/i);
+  assert.match(OPERATING_MODULES.find(item => item.id === "performance").state, /analytics not connected/i);
+});
+
+test("lead, follow-up and closing plans route to their specialist partners", () => {
+  const result = preparePlan("Find more qualified leads, follow up and help me close the sale");
+  assert.ok(result.partners.includes("AI Hunter"));
+  assert.ok(result.partners.includes("AI Fishing Agent"));
+  assert.ok(result.partners.includes("AI Closer"));
+  assert.equal(result.execution, "not-connected");
+  assert.match(result.response, /No external action has been taken/);
 });
 
 test("package details match the business tiers without claiming checkout", () => {

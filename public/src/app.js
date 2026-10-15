@@ -1,7 +1,8 @@
-import { BUSINESS_STAGES, PACKAGES, PARTNERS, PRODUCTS } from "./domain.mjs";
+import { BUSINESS_STAGES, OPERATING_MODULES, PACKAGES, PARTNERS, PRODUCTS } from "./domain.mjs";
 
 const byId = id => document.getElementById(id);
 const partnerList = byId("partner-list");
+const operatingModuleGrid = byId("operating-module-grid");
 const productGrid = byId("product-grid");
 const planGrid = byId("plan-grid");
 const thread = byId("chat-thread");
@@ -140,6 +141,36 @@ for (const plan of PACKAGES) {
   for (const detail of plan.details) list.append(el("li", "", detail));
   card.append(list);
   planGrid.append(card);
+}
+
+for (const module of OPERATING_MODULES) {
+  const card = el("article", "operating-module-card");
+  card.append(el("span", "module-area", module.area), el("h3", "", module.name), el("p", "", module.summary));
+  card.append(el("small", "module-status", module.state));
+  const action = el("button", "module-action", module.id === "studio" ? "Open Studio →" : module.id === "connections" ? "Open setup guide →" : "Plan with Chatbliz →");
+  action.type = "button";
+  action.addEventListener("click", () => {
+    if (module.id === "connections") {
+      showTechnicalDesk();
+      byId("social-wizard-title").scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const product = PRODUCTS.find(item => item.id === module.workspace);
+    if (product) setWorkspace(product);
+    if (module.id === "studio") {
+      byId("studio-title").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (module.id === "twin") {
+      byId("profile-title").scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    input.value = module.prompt;
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  card.append(action);
+  operatingModuleGrid.append(card);
 }
 
 for (const text of [
