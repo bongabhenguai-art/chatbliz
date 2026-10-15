@@ -1,4 +1,4 @@
-import { PACKAGES, PARTNERS, PRODUCTS } from "./domain.mjs";
+import { BUSINESS_STAGES, PACKAGES, PARTNERS, PRODUCTS } from "./domain.mjs";
 
 const byId = id => document.getElementById(id);
 const partnerList = byId("partner-list");
@@ -187,6 +187,18 @@ document.querySelectorAll("[data-journey-workspace]").forEach(button => {
     if (!product) return;
     setWorkspace(product);
     input.value = button.dataset.journeyPrompt || `Help me work on ${product.name} for my business`;
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+});
+
+document.querySelectorAll("[data-business-stage]").forEach(button => {
+  button.addEventListener("click", () => {
+    const stage = BUSINESS_STAGES.find(item => item.id === button.dataset.businessStage);
+    const product = PRODUCTS.find(item => item.id === "business");
+    if (!stage || !product) return;
+    setWorkspace(product);
+    input.value = stage.prompt;
     input.focus();
     input.scrollIntoView({ behavior: "smooth", block: "center" });
   });
@@ -391,6 +403,7 @@ function appendSolution(plan, sourceMessageId) {
   article.append(el("span", "message-avatar", "F"));
   const body = el("div", "message-body");
   body.append(el("p", "", `Problem area: ${plan.solution.area}. ${plan.solution.assessment}`));
+  if (plan.stage) body.append(el("p", "stage-guidance", `${plan.stage.name}: ${plan.stage.focus} First step: ${plan.stage.firstStep}`));
   body.append(el("strong", "", "Practical next steps"));
   const steps = el("ol");
   for (const action of plan.solution.actions) {
