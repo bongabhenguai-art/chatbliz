@@ -44,7 +44,7 @@ const productRules = [
 ];
 
 function diagnoseBusinessProblem(text) {
-  if (/\b(sign ?up|signup|login|save|saving|database|not persisting|not saving|broken|bug|error|failure|not working|doesn.t work|stuck)\b/i.test(text)) {
+  if (/\b(sign ?up|signup|login|database|not persisting|not saving|broken|bug|error|failure|not working|doesn.t work|stuck)\b/i.test(text)) {
     return {
       area: "Digital product reliability",
       assessment: "A save, sign-up or application failure is being reported. The root cause is not confirmed yet.",
@@ -59,7 +59,7 @@ function diagnoseBusinessProblem(text) {
     };
   }
 
-  if (/\b(no|few|more|need|find)\b.*\b(leads?|customers?|clients?|sales)\b|\b(leads?|customers?|sales)\b.*\b(low|slow|not enough|need|problem)\b/i.test(text)) {
+  if (/\b(no|few|more|need|find)\b.*\b(leads?|customers?|clients?|sales)\b|\b(leads?|customers?|sales)\b.*\b(low|slow|not enough|need|problem)\b|\b(low|falling|declining|slow|poor)\s+(?:sales|customers?)\b|\b(?:sales|customers?)\s+(?:are|is)\s+(?:low|falling|declining|slow|poor)\b|\b(?:not enough|do not have enough|don't have enough)\s+customers?\b/i.test(text)) {
     return {
       area: "Lead flow and sales",
       assessment: "The stated problem is getting enough suitable enquiries or converting them. The cause still needs business evidence.",
@@ -71,6 +71,21 @@ function diagnoseBusinessProblem(text) {
       ],
       measure: "Qualified enquiries per week, response time and the share of enquiries that become paying customers.",
       questions: ["What do you sell, and where do customers currently find you?", "How many enquiries and sales did you get last week?"]
+    };
+  }
+
+  if (/\b(money[- ]saving|save money|save on|reduce (?:costs?|expenses?|spending)|cut (?:costs?|expenses?|spending)|lower (?:costs?|expenses?))\b/i.test(text)) {
+    return {
+      area: "Cost control and pricing",
+      assessment: "You want to reduce business costs. The best cuts depend on which costs protect sales, quality and reliable delivery.",
+      actions: [
+        "List the last month’s fixed and variable costs and separate essential delivery costs from optional spending.",
+        "Compare supplier prices and recurring fees while checking quality, delivery time and cancellation terms.",
+        "Estimate the effect of each proposed cut on sales, customer experience and your profit margin before changing it.",
+        "Choose one low-risk cost change, record the amount saved and review the result after a month."
+      ],
+      measure: "Monthly costs saved, gross margin and any change in sales or customer complaints.",
+      questions: ["Which costs have increased most recently?", "What must stay reliable for customers while you reduce spending?"]
     };
   }
 
