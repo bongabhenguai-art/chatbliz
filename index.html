@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en-ZA">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0b0b0b">
+    <meta name="description" content="Chatbliz OS — your business partner in your hands. Plan your business, brand, website and content in one chat-first workspace.">
+    <title>Chatbliz OS — Your Business Partner</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="wordmark" href="#home" aria-label="Chatbliz home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
+        <p class="nav-label">WORKSPACES</p>
+        <nav class="workspace-nav" aria-label="Workspaces">
+          <button class="nav-item active" data-workspace="business"><span class="nav-icon">⌂</span><span>My Business</span></button>
+          <button class="nav-item" data-workspace="brand"><span class="nav-icon">✳</span><span>My Brand</span></button>
+          <button class="nav-item" data-workspace="website"><span class="nav-icon">▤</span><span>My Website &amp; App</span></button>
+          <button class="nav-item" data-workspace="content"><span class="nav-icon">◉</span><span>My Studio</span></button>
+        </nav>
+        <div class="sidebar-note"><span class="status-dot"></span><span>Private business workspace<br><small>Connections are not set up yet</small></span></div>
+        <div class="sidebar-bottom"><span class="avatar">BB</span><span><strong>Bonga Bhengu</strong><small>Workspace owner</small></span><span class="more">•••</span></div>
+      </aside>
+
+      <main id="home" class="main-content">
+        <header class="topbar">
+          <div class="breadcrumbs"><span>CHATBLIZ OS</span><span class="crumb-divider">/</span><strong id="active-workspace-label">MY BUSINESS</strong></div>
+          <div class="top-actions"><span class="connection-pill"><i></i> Local preview</span><button class="icon-button" type="button" aria-label="Settings">⚙</button></div>
+        </header>
+
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
+            <h1 id="workspace-title">What are we working on today?</h1>
+            <p class="welcome-copy">Tell your team what your business needs. Chatbliz helps you plan the next step and keeps each action visible.</p>
+          </div>
+          <div class="today-card"><span class="today-icon">✦</span><span><strong>One conversation</strong><small>Four connected workspaces</small></span></div>
+        </section>
+
+        <section class="partners-section" aria-labelledby="partners-title">
+          <div class="section-heading"><div><p class="eyebrow">YOUR AI BUSINESS TEAM</p><h2 id="partners-title">Choose who helps</h2></div><span class="muted-label">Planning tools · connections pending</span></div>
+          <div class="partner-list" id="partner-list"></div>
+        </section>
+
+        <section class="conversation" aria-label="Chatbliz conversation">
+          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
+          <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
+            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p>Hello Bonga. I’m here to help you build and grow your business. Tell me what you want to work on, and I’ll suggest a clear next step.</p><small>Planning only · no external actions have been taken</small></div></article>
+          </div>
+          <div class="suggestions" id="suggestions" aria-label="Suggested prompts"></div>
+          <form id="chat-form" class="composer">
+            <label class="sr-only" for="message-input">Message Chatbliz</label>
+            <textarea id="message-input" rows="1" maxlength="4000" placeholder="Tell Chatbliz what your business needs…" required></textarea>
+            <div class="composer-bottom"><span>Enter to send · Shift + Enter for a new line</span><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
+          </form>
+          <p class="disclosure">Chatbliz currently prepares local plans. AI providers, account connections, WhatsApp, publishing, bookings and payments are not connected in this build.</p>
+        </section>
+
+        <section class="products-section" aria-labelledby="products-title">
+          <div class="section-heading"><div><p class="eyebrow">FOUR CORE SERVICES</p><h2 id="products-title">Your workspaces</h2></div><span class="muted-label">Shared capabilities, one Chatbliz account</span></div>
+          <div id="product-grid" class="product-grid"></div>
+        </section>
+
+        <section class="plans-section" aria-labelledby="plans-title">
+          <div class="section-heading"><div><p class="eyebrow">GROW WITH YOUR TEAM</p><h2 id="plans-title">Chatbliz packages</h2></div><span class="muted-label">Checkout and billing are not connected</span></div>
+          <div id="plan-grid" class="plan-grid"></div>
+          <p class="pricing-note">Prices and package details need owner confirmation before checkout. Enterprise is custom quoted.</p>
+        </section>
+        <footer class="footer">Chatbliz OS <span>·</span> Built for business owners <span>·</span> <a href="https://chatbliz.online" target="_blank" rel="noreferrer">chatbliz.online</a></footer>
+      </main>
+    </div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
