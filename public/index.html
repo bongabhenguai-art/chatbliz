@@ -88,6 +88,22 @@
           <p class="journey-note"><strong>What works today:</strong> your account can save your business profile, conversations and tasks. Chatbliz creates planning guidance in the app. Website building, brand search, content production or publishing, lead capture, WhatsApp, bookings and payments still need their service connections before they can happen here.</p>
         </section>
 
+        <section id="developer-desk" class="developer-desk" aria-labelledby="developer-title" hidden>
+          <div class="section-heading"><div><p class="eyebrow">MY WEBSITE &amp; APP · DEVELOPER INTERFACE</p><h2 id="developer-title">Build for each customer</h2></div><span class="muted-label">One sign-in · separate project memory</span></div>
+          <p class="developer-intro">Sign in once, create a separate build brief for each customer business, and use the same four-workspace loop to shape its brand, website or app, content and operations. Save customer feedback as a project lesson; Chatbliz can include that lesson in the next build prompt.</p>
+          <form id="build-form" class="build-form">
+            <label>Customer business<input id="build-business" maxlength="120" placeholder="Business or project name" required></label>
+            <label>Business type<input id="build-type" maxlength="100" placeholder="Food, fashion, insurance…" required></label>
+            <label class="build-wide">Customer need<input id="build-problem" maxlength="1000" placeholder="What problem should this build solve?" required></label>
+            <label class="build-wide">Build goal<input id="build-goal" maxlength="700" placeholder="What should the customer be able to do when it is working?" required></label>
+            <p id="build-status" class="form-status" role="status"></p>
+            <button class="send-button build-submit" type="submit">Save customer build</button>
+          </form>
+          <div class="build-list-heading"><h3>Customer builds</h3><span id="build-count" class="muted-label">Loading projects</span></div>
+          <div id="build-list" class="build-list" aria-live="polite"></div>
+          <p class="developer-note"><strong>Learning and privacy:</strong> saved lessons are owner-entered project notes, reused only when you ask Chatbliz to continue that same project. This does not train the underlying AI model or share one customer's notes with another. Keep passwords, payment details and private customer information out of build notes. Code generation, customer logins and live publishing still require connected developer and hosting services.</p>
+        </section>
+
         <section class="partners-section" aria-labelledby="partners-title">
           <div class="section-heading"><div><p class="eyebrow">YOUR AI BUSINESS TEAM</p><h2 id="partners-title">Choose who helps</h2></div><span class="muted-label">Planning tools · connections pending</span></div>
           <div class="partner-list" id="partner-list"></div>
