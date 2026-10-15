@@ -6,6 +6,7 @@ const SESSION_SECONDS = 60 * 60 * 24 * 365;
 const PASSWORD_ITERATIONS = 120_000;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_LIMIT = 10;
+const MAX_JSON_BYTES = 16_384;
 const DUMMY_PASSWORD_RECORD = {
   password_hash: base64url(new Uint8Array(32)),
   password_salt: base64url(new Uint8Array(16)),
@@ -28,15 +29,51 @@ function fail(message, status = 400) {
 }
 
 async function readJson(request) {
-  const length = Number(request.headers.get("content-length") || 0);
-  if (length > 16_384) throw new Error("Request is too large.");
+  const reader = request.body?.getReader();
+  if (!reader) throw new Error("Send valid JSON.");
+  const chunks = [];
+  let size = 0;
   try {
-    const data = await request.json();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_JSON_BYTES) {
+        await reader.cancel();
+        const error = new Error("Request is too large.");
+        error.status = 413;
+        throw error;
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    const data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
     if (!data || Array.isArray(data) || typeof data !== "object") throw new Error();
     return data;
-  } catch {
+  } catch (error) {
+    if (error?.status === 413) throw error;
     throw new Error("Send valid JSON.");
   }
+}
+
+function validateBrowserMutation(request, url) {
+  const origin = request.headers.get("origin");
+  if (!origin) return "An Origin header is required for this request.";
+  try {
+    if (new URL(origin).origin !== url.origin) return "Cross-origin requests are not allowed.";
+  } catch {
+    return "Cross-origin requests are not allowed.";
+  }
+  if (url.pathname !== "/api/auth/logout") {
+    const contentType = request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase();
+    if (contentType !== "application/json") return "Send this request as JSON.";
+  }
+  return "";
 }
 
 function cookieValue(request, name) {
@@ -164,7 +201,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/auth/signup" && method === "POST") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     const displayName = limitedText(input.displayName, 80, "Name");
     const email = limitedText(input.email, 254, "Email").toLowerCase();
     const password = String(input.password ?? "");
@@ -209,7 +246,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/auth/login" && method === "POST") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     const email = limitedText(input.email, 254, "Email").toLowerCase();
     const password = String(input.password ?? "");
     const ip = request.headers.get("cf-connecting-ip") || "unknown";
@@ -259,7 +296,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/builds" && method === "POST") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     let businessName, businessType, problem, goal;
     try {
       businessName = limitedText(input.businessName, 120, "Business name");
@@ -284,7 +321,7 @@ async function handleApi(request, env) {
   const buildMatch = pathname.match(/^\/api\/builds\/([\w-]+)$/u);
   if (buildMatch && method === "PATCH") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     let learningNotes;
     try { learningNotes = limitedText(input.learningNotes, 2000, "Learning notes"); }
     catch (error) { return fail(error.message); }
@@ -299,7 +336,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/profile" && method === "PUT") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     let displayName, businessName, industry, location, website, whatsapp;
     try {
       displayName = limitedText(input.displayName, 80, "Name");
@@ -340,7 +377,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/chat" && method === "POST") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     let message;
     try { message = limitedText(input.message, 4000, "Message"); } catch (error) { return fail(error.message); }
     if (!message) return fail("Write a message first.");
@@ -378,7 +415,7 @@ async function handleApi(request, env) {
 
   if (pathname === "/api/tasks" && method === "POST") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     let title;
     try { title = limitedText(input.title, 240, "Task"); } catch (error) { return fail(error.message); }
     if (!title) return fail("Task title is required.");
@@ -394,7 +431,7 @@ async function handleApi(request, env) {
   const taskMatch = pathname.match(/^\/api\/tasks\/([\w-]+)$/u);
   if (taskMatch && method === "PATCH") {
     let input;
-    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    try { input = await readJson(request); } catch (error) { return fail(error.message, error.status || 400); }
     if (input.status !== "open" && input.status !== "done") return fail("Task status must be open or done.");
     await env.DB.prepare(`UPDATE tasks SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
       WHERE id = ? AND user_id = ?`).bind(input.status, taskMatch[1], user.id).run();
@@ -435,6 +472,10 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { "allow": "GET, POST, PUT, PATCH, OPTIONS" } });
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method.toUpperCase())) {
+        const invalid = validateBrowserMutation(request, url);
+        if (invalid) return fail(invalid, 403);
+      }
       try {
         const response = await handleApi(request, env);
         return await renewActiveSession(request, env, response);
