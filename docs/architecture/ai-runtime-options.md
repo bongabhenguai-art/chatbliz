@@ -16,6 +16,8 @@ OpenJarvis is a local-first AI framework with local/cloud inference backends, ag
 
 The pasted config is a desktop/local MCP-client configuration pattern. `npx`/`uv` subprocess servers cannot be launched by the deployed Worker. Each named server and credential must be verified independently; example names and placeholder secrets do not establish that a service exists or is connected. Do not put API keys in a checked-in config, browser bundle, or shared customer configuration.
 
+Do not use the supplied OpenHands Docker command as written. Mounting `/var/run/docker.sock` gives the container access to control the host Docker daemon, while `SANDBOX_ALLOW_NETWORK=true` enables broad network access. A future repair runner needs an isolated disposable sandbox with no host socket, no production secrets, restricted network egress, an owner-scoped repository checkout, resource/time limits, and patch-only output. It may open a reviewable branch and run tests; it must not update the live module or regenerate/deploy firewall rules autonomously.
+
 ## Safe integration path
 
 1. **Resolve access and deployment first.** Keep the current Cloudflare Access restriction in place until owner/customer authorization is designed. The domain still needs its registrar nameservers pointed to Cloudflare before it can route to the Worker; preserve the existing mail records.
@@ -23,7 +25,7 @@ The pasted config is a desktop/local MCP-client configuration pattern. `npx`/`uv
 3. **Connect one user-authorized business integration at a time.** Google Workspace should use its official OAuth flow, minimal scopes, account-specific consent, revocation, and server-side token storage. WhatsApp and social accounts need separate official provider apps and callbacks. A global desktop MCP config is not an OAuth substitute.
 4. **Introduce tools through a governed registry.** Begin with narrowly scoped, read-only tools; record each tool's owner, inputs, outputs, permissions, and failure behavior. Require explicit confirmation for external writes such as sending messages, publishing, editing files, or changing DNS. Do not expose shell/code execution MCP tools to customer sessions.
 5. **Evaluate voice after the authenticated web workflow works.** Voice can become an optional interface over the same Chatbliz API and permissions. A LiveKit or other realtime service would need its own architecture, consent, retention, and cost review; it should not create a parallel account or data store.
-6. **Keep app-building and repair isolated.** Code generation and technical repair must run in an owner-authorized sandbox with scoped repository permissions, reviewable diffs, tests, and explicit deploy approval. Never give an autonomous agent direct production shell, unrestricted filesystem, or broad account credentials.
+6. **Keep app-building and repair isolated.** Code generation and technical repair must run in an owner-authorized sandbox with scoped repository permissions, reviewable diffs, tests, and explicit deploy approval. Never give an autonomous agent direct production shell, unrestricted filesystem, or broad account credentials. Use the existing Cloudflare deployment/logging path to create an incident and a proposed patch; require CI and owner approval before production deployment.
 
 ## Immediate priority
 
