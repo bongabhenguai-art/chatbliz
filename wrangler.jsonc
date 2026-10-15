@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "chatbliz-os-db",
-      "database_id": "00000000-0000-0000-0000-000000000001",
+      "database_id": "03dafb96-f099-4d0b-ab28-841190d3d35d",
       "migrations_dir": "./migrations"
     }
   ]
