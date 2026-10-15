@@ -14,6 +14,13 @@ export const PRODUCTS = Object.freeze([
   { id: "content", name: "My Studio", icon: "◉", description: "Plan image, video, podcast and livestream content.", status: "Studio connection required" }
 ]);
 
+export const BUSINESS_STAGES = Object.freeze([
+  { id: "rebuilding", name: "Rebuilding", prompt: "I am rebuilding my business after a setback. Help me identify the resources and customers I still have, then choose one low-cost next step." , focus: "Protect what remains and restore reliable customer activity.", firstStep: "List the resources you can use now, the customers you can still reach and the smallest offer you can deliver this week.", measure: "Available cash or resources, customer conversations and completed sales." },
+  { id: "starting", name: "Starting", prompt: "I am starting a business. Help me test one customer problem and offer before I spend much money." , focus: "Test a real customer need before committing to larger costs.", firstStep: "Name one customer group, the problem they pay to solve and a simple offer you can discuss with them.", measure: "Customer conversations, requests for a next step and paid tests." },
+  { id: "building", name: "Building", prompt: "I am building my business. Help me make delivery and customer follow-up more reliable." , focus: "Make the current offer easier to deliver consistently.", firstStep: "Map one customer journey from first enquiry to completed delivery and mark where work waits or repeats.", measure: "Response time, delivery time, repeat work and returning customers." },
+  { id: "growing", name: "Growing", prompt: "I am growing my business. Help me check demand, profit and delivery capacity before choosing where to expand." , focus: "Grow from evidence about demand, margin and capacity.", firstStep: "Compare recent enquiries, completed sales, direct costs and available delivery capacity for one offer.", measure: "Enquiry-to-sale rate, gross margin and capacity used." }
+]);
+
 export const PACKAGES = Object.freeze([
   { name: "Starter", price: "R299", badge: "", details: ["Business profile dashboard", "Sales Assistant", "Legal guide", "Mentor and Advisor"] },
   { name: "Growth", price: "R499", badge: "TEAM", details: ["Everything in Starter", "Expanded AI partner team", "Business Coach", "Executive team support"] },
@@ -144,6 +151,14 @@ export function preparePlan(message) {
   const partnerNames = (partnerIds.length ? partnerIds : ["assistant"]).map(id => PARTNERS.find(item => item.id === id).name);
   const product = PRODUCTS.find(item => item.id === productId);
   const solution = diagnoseBusinessProblem(text);
+  const stageRules = [
+    ["rebuilding", /\b(rebuild(?:ing)?|starting again|recover(?:ing|y)?|after (?:a )?setback|lost (?:my )?(?:business|shop|equipment)|business was destroyed)\b/i],
+    ["starting", /\b(starting|start a business|new business|launch(?:ing)?|just started|beginning)\b/i],
+    ["growing", /\b(growing|grow(?:th)?|scale|expand(?:ing)?|more locations|increase capacity)\b/i],
+    ["building", /\b(building|build my business|established|improve operations|make .* reliable)\b/i]
+  ];
+  const stageId = stageRules.find(([, rule]) => rule.test(text))?.[0];
+  const stage = BUSINESS_STAGES.find(item => item.id === stageId) ?? null;
   const problemSolving = solution.area !== "Business planning" || /\b(problem|fix|broken|stuck|not working|doesn.t work|issue|diagnos|failed|failure)\b/i.test(text);
   return {
     message: text,
@@ -152,7 +167,8 @@ export function preparePlan(message) {
     status: "plan-prepared",
     execution: "not-connected",
     solution,
+    stage,
     problemSolving,
-    response: `${partnerNames.join(" and ")} can help with ${product.name}. I’ve prepared this as a planning request. ${product.status}. No external action has been taken.`
+    response: `${partnerNames.join(" and ")} can help with ${product.name}. I’ve prepared this as a planning request. ${stage ? `${stage.name}: ${stage.focus} First step: ${stage.firstStep} Measure: ${stage.measure}` : "Tell me whether you are rebuilding, starting, building or growing so I can tune the plan to your stage."} ${product.status}. No external action has been taken.`
   };
 }
