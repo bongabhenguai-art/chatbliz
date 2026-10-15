@@ -6,6 +6,7 @@ const productGrid = byId("product-grid");
 const planGrid = byId("plan-grid");
 const thread = byId("chat-thread");
 const input = byId("message-input");
+const buildList = byId("build-list");
 let selectedPartner = null;
 let authMode = "signup";
 let currentUser = null;
@@ -161,6 +162,7 @@ function setWorkspace(product) {
   document.querySelectorAll("[data-workspace]").forEach(button => button.classList.toggle("active", button.dataset.workspace === product.id));
   byId("active-workspace-label").textContent = product.name.toUpperCase();
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
+  byId("developer-desk").hidden = product.id !== "website";
 }
 
 document.querySelectorAll("[data-journey-workspace]").forEach(button => {
@@ -205,6 +207,94 @@ async function loadTasks() {
   if (!tasks.length) list.append(el("p", "empty-state", "Your saved follow-up actions will appear here."));
   else for (const task of tasks) list.append(renderTask(task));
 }
+
+function buildPrompt(build) {
+  const base = [
+    `Plan the next build step for customer business ${build.businessName} (${build.businessType}).`,
+    `Customer need: ${build.problem}`,
+    `Build goal: ${build.goal}`,
+    "Use this customer's project context to prepare practical steps across brand, website or app, studio content, and business operations. Mark anything that needs a connected service; do not claim code has been built or published."
+  ].join("\n");
+  const lesson = build.learningNotes?.trim();
+  return `${base}${lesson ? `\nOwner-reviewed learning from this customer's feedback: ${lesson.slice(0, Math.max(0, 3900 - base.length))}` : ""}`.slice(0, 4000);
+}
+
+function renderBuild(build) {
+  const card = el("article", "build-card");
+  const top = el("div", "build-card-top");
+  const identity = el("div");
+  identity.append(el("h4", "", build.businessName), el("span", "build-type", build.businessType));
+  top.append(identity, el("span", "build-saved", `Updated ${new Date(build.updatedAt).toLocaleDateString()}`));
+  card.append(top, el("p", "build-detail", `Customer need: ${build.problem}`), el("p", "build-detail", `Build goal: ${build.goal}`));
+  const notesLabel = el("label", "build-notes-label", "Customer feedback / lesson learned");
+  const notes = el("textarea", "build-notes");
+  notes.value = build.learningNotes || "";
+  notes.maxLength = 2000;
+  notes.rows = 3;
+  notes.placeholder = "Summarize confirmed feedback or a lesson to use on this project’s next step…";
+  notesLabel.append(notes);
+  card.append(notesLabel);
+  const actions = el("div", "build-actions");
+  const save = el("button", "build-secondary", "Save project lesson");
+  save.type = "button";
+  save.addEventListener("click", async () => {
+    save.disabled = true;
+    try {
+      const result = await api(`/api/builds/${encodeURIComponent(build.id)}`, {
+        method: "PATCH", body: JSON.stringify({ learningNotes: notes.value })
+      });
+      build.learningNotes = result.build.learningNotes;
+      save.textContent = "Lesson saved";
+      byId("build-count").textContent = "Project lesson saved";
+      await loadBuilds();
+    } catch (error) {
+      save.textContent = "Retry saving lesson";
+      byId("build-count").textContent = error.message;
+    } finally { save.disabled = false; }
+  });
+  const plan = el("button", "build-primary", "Plan next build step →");
+  plan.type = "button";
+  plan.addEventListener("click", () => {
+    setWorkspace(PRODUCTS.find(item => item.id === "website"));
+    input.value = buildPrompt(build);
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  actions.append(save, plan);
+  card.append(actions);
+  return card;
+}
+
+async function loadBuilds() {
+  const { builds } = await api("/api/builds");
+  buildList.replaceChildren();
+  byId("build-count").textContent = `${builds.length} saved ${builds.length === 1 ? "build" : "builds"}`;
+  if (!builds.length) buildList.append(el("p", "empty-state", "Save a customer build brief to start. Each project's learning notes stay separate."));
+  else for (const build of builds) buildList.append(renderBuild(build));
+}
+
+byId("build-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = byId("build-form").querySelector("button[type='submit']");
+  const status = byId("build-status");
+  button.disabled = true;
+  status.textContent = "Saving this customer build to your account…";
+  try {
+    await api("/api/builds", {
+      method: "POST",
+      body: JSON.stringify({
+        businessName: byId("build-business").value,
+        businessType: byId("build-type").value,
+        problem: byId("build-problem").value,
+        goal: byId("build-goal").value
+      })
+    });
+    byId("build-form").reset();
+    status.textContent = "Customer build saved. Add feedback later, then use Plan next build step.";
+    await loadBuilds();
+  } catch (error) { status.textContent = error.message; }
+  finally { button.disabled = false; }
+});
 
 async function saveTask(title, sourceMessageId) {
   await api("/api/tasks", { method: "POST", body: JSON.stringify({ title, sourceMessageId }) });
@@ -338,7 +428,7 @@ async function loadWorkspace(initialProfile) {
   try {
     const details = initialProfile ? { user: currentUser, profile: initialProfile } : await api("/api/me");
     fillProfile(details.user, details.profile);
-    const [messages] = await Promise.all([api("/api/chat"), loadTasks()]);
+    const [messages] = await Promise.all([api("/api/chat"), loadTasks(), loadBuilds()]);
     if (messages.messages.length) {
       thread.replaceChildren();
       for (const item of messages.messages) renderSavedMessage(item);
