@@ -1,4 +1,5 @@
 export const PARTNERS = Object.freeze([
+  { id: "problem_solver", name: "AI Problem Solver", icon: "F", description: "Find the business bottleneck, plan a practical fix and measure the result." },
   { id: "mentor", name: "AI Mentor", icon: "M", description: "Long-term business development and learning." },
   { id: "coach", name: "AI Coach", icon: "C", description: "Daily priorities, accountability and progress." },
   { id: "assistant", name: "AI Assistant", icon: "A", description: "Work organization, drafts and scheduling plans." },
@@ -21,6 +22,7 @@ export const PACKAGES = Object.freeze([
 ]);
 
 const partnerRules = [
+  ["problem_solver", /\b(fix|fixing|broken|stuck|problem|issue|diagnos(?:e|is)|not working|doesn.t work|failed|failure|not saving|not saved|signup|sign up|database|not enough customers|more customers|more leads|low sales|losing sales|cash ?flow|bottleneck|complaint|delay)\b/i],
   ["negotiator", /negotiat|objection|counteroffer|close (?:a |the )?sale|deal/i],
   ["mentor", /mentor|teach|learn|lesson|train me/i],
   ["coach", /coach|goal|accountab|improve|priorit/i],
@@ -34,6 +36,106 @@ const productRules = [
   ["business", /business|sales|crm|lead|customer|grow/i]
 ];
 
+function diagnoseBusinessProblem(text) {
+  if (/\b(sign ?up|signup|login|save|saving|database|not persisting|not saving|broken|bug|error|failure|not working|doesn.t work|stuck)\b/i.test(text)) {
+    return {
+      area: "Digital product reliability",
+      assessment: "A save, sign-up or application failure is being reported. The root cause is not confirmed yet.",
+      actions: [
+        "Reproduce the failure with a fresh test record and capture the exact result.",
+        "Trace the request from the screen through the API route to the database write.",
+        "Compare the running app’s database and environment configuration with the one used for manual tests; never print secrets.",
+        "Read the test record back from the same runtime database before reporting success. Return an error when the write fails."
+      ],
+      measure: "A test sign-up is readable from the app’s runtime database, and a failed write returns a visible error.",
+      questions: ["Which action fails, and what exact message do you see?", "Does the same failure happen in preview and on the live site?"]
+    };
+  }
+
+  if (/\b(no|few|more|need|find)\b.*\b(leads?|customers?|clients?|sales)\b|\b(leads?|customers?|sales)\b.*\b(low|slow|not enough|need|problem)\b/i.test(text)) {
+    return {
+      area: "Lead flow and sales",
+      assessment: "The stated problem is getting enough suitable enquiries or converting them. The cause still needs business evidence.",
+      actions: [
+        "Write down the target customer, the problem they pay to solve and the offer you want them to choose.",
+        "Choose one channel those customers already use and give them one clear next step, such as WhatsApp or a quote request.",
+        "Record each enquiry, response time, follow-up and outcome for one week.",
+        "Review where people stop responding, then adjust the offer or follow-up based on that evidence."
+      ],
+      measure: "Qualified enquiries per week, response time and the share of enquiries that become paying customers.",
+      questions: ["What do you sell, and where do customers currently find you?", "How many enquiries and sales did you get last week?"]
+    };
+  }
+
+  if (/\b(visibility|visible online|online presence|seo|google search|not found online|website traffic)\b/i.test(text)) {
+    return {
+      area: "Business visibility",
+      assessment: "The request concerns how customers discover the business online. Chatbliz has not searched or verified your listings in this preview.",
+      actions: [
+        "List the business name, location, phone number, website and social pages customers should find.",
+        "Check that the same name, contact details and service description appear on each owner-controlled listing.",
+        "Choose one priority service and location, then prepare a useful page or post with a clear enquiry action.",
+        "After an authorized connection is available, compare visits, calls and enquiries before and after the update."
+      ],
+      measure: "Profile completeness, relevant visits and qualified enquiries by source.",
+      questions: ["What is the business name and service area?", "Which website or public business profiles do you control?"]
+    };
+  }
+
+  if (/\b(cash ?flow|cashflow|profit|costs?|expenses?|pricing|margin|budget)\b/i.test(text)) {
+    return {
+      area: "Money and pricing operations",
+      assessment: "The request concerns cash, cost or pricing pressure. There are not enough figures to identify the cause or recommend a change.",
+      actions: [
+        "Separate expected money in from committed money out for the next four weeks.",
+        "For each main product or service, list its selling price and direct cost per sale.",
+        "Mark upcoming bills, customer payments due and any amounts you are unsure about.",
+        "Use the totals to identify the largest gap, then choose one action and review it weekly."
+      ],
+      measure: "Weekly cash position and gross margin per product or service, based on the figures you provide.",
+      questions: ["Which payment or cost is creating the immediate pressure?", "What are your recent weekly sales and main direct costs?"]
+    };
+  }
+
+  if (/\b(complaint|unhappy customer|refund|return customer|customer retention|bad review)\b/i.test(text)) {
+    return {
+      area: "Customer experience and retention",
+      assessment: "The request concerns a customer experience problem. The specific cause and applicable policy need checking before promising an outcome.",
+      actions: [
+        "Record what the customer expected, what happened and when.",
+        "Acknowledge the issue and confirm the next response time without promising an unapproved refund or remedy.",
+        "Compare the case with the business’s stated policy and identify who can approve the remedy.",
+        "Track resolution time and whether the same issue appears again."
+      ],
+      measure: "Time to first response, time to resolution and repeat complaint rate.",
+      questions: ["What happened from the customer’s point of view?", "What return or service policy has the business already published?"]
+    };
+  }
+
+  if (/\b(delay|late|orders?|workflow|process|staff|operations?|repeat task|bottleneck)\b/i.test(text)) {
+    return {
+      area: "Daily operations",
+      assessment: "The request suggests a process bottleneck. The exact step causing the delay needs to be mapped.",
+      actions: [
+        "Write the process as steps from customer request to completed delivery.",
+        "For one recent case, note who owned each step and how long it took.",
+        "Mark the step that waited longest, lacked information or was repeated.",
+        "Test one small change with a named owner and review the result after a week."
+      ],
+      measure: "Time from request to completion, overdue tasks and repeat work.",
+      questions: ["Which process is delayed, and when does the delay begin?", "Who currently owns the delayed step?"]
+    };
+  }
+
+  return {
+    area: "Business planning",
+    assessment: "I need the business problem and the result you want before I can identify a useful fix.",
+    actions: ["Describe what is happening now, who it affects and what you want to be different.", "Share one recent example and any time, budget or resource limit.", "Chatbliz will turn that information into a prioritized action plan and a way to measure progress."],
+    measure: "Choose one observable result after the problem and starting point are clear.",
+    questions: ["What is the biggest business problem right now?", "What would a good result look like, and by when?"]
+  };
+}
+
 export function preparePlan(message) {
   const text = String(message ?? "").trim().slice(0, 4000);
   if (!text) throw new Error("Write a message first.");
@@ -41,12 +143,16 @@ export function preparePlan(message) {
   const productId = productRules.find(([, rule]) => rule.test(text))?.[0] ?? "business";
   const partnerNames = (partnerIds.length ? partnerIds : ["assistant"]).map(id => PARTNERS.find(item => item.id === id).name);
   const product = PRODUCTS.find(item => item.id === productId);
+  const solution = diagnoseBusinessProblem(text);
+  const problemSolving = solution.area !== "Business planning" || /\b(problem|fix|broken|stuck|not working|doesn.t work|issue|diagnos|failed|failure)\b/i.test(text);
   return {
     message: text,
     partners: partnerNames,
     product,
     status: "plan-prepared",
     execution: "not-connected",
+    solution,
+    problemSolving,
     response: `${partnerNames.join(" and ")} can help with ${product.name}. I’ve prepared this as a planning request. ${product.status}. No external action has been taken.`
   };
 }

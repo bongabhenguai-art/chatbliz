@@ -94,6 +94,23 @@ function appendMessage(role, text, status) {
   thread.scrollTop = thread.scrollHeight;
 }
 
+function appendSolution(plan) {
+  const article = el("article", "message assistant-message");
+  article.append(el("span", "message-avatar", "F"));
+  const body = el("div", "message-body");
+  body.append(el("p", "", `Problem area: ${plan.solution.area}. ${plan.solution.assessment}`));
+  body.append(el("strong", "", "Practical next steps"));
+  const steps = el("ol");
+  for (const action of plan.solution.actions) steps.append(el("li", "", action));
+  body.append(steps);
+  body.append(el("p", "", `Measure: ${plan.solution.measure}`));
+  body.append(el("p", "", `To make this specific: ${plan.solution.questions.join(" ")}`));
+  body.append(el("small", "", `Status: ${plan.status} · ${plan.execution}. This preview plans actions; it has not changed external accounts or published anything.`));
+  article.append(body);
+  thread.append(article);
+  thread.scrollTop = thread.scrollHeight;
+}
+
 function sendMessage(value) {
   const text = value.trim();
   if (!text) return;
@@ -104,7 +121,8 @@ function sendMessage(value) {
     plan.partners = [partner.name];
     plan.response = `${partner.name} can help with ${plan.product.name}. I’ve prepared this as a planning request. ${plan.product.status}. No external action has been taken.`;
   }
-  appendMessage("assistant", plan.response, `Status: ${plan.status} · External execution: ${plan.execution}`);
+  if (plan.problemSolving || selectedPartner === "problem_solver") appendSolution(plan);
+  else appendMessage("assistant", plan.response, `Status: ${plan.status} · External execution: ${plan.execution}`);
   setWorkspace(plan.product);
   selectedPartner = null;
   partnerList.querySelectorAll("button").forEach(button => {
