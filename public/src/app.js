@@ -163,6 +163,17 @@ function setWorkspace(product) {
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
 }
 
+document.querySelectorAll("[data-journey-workspace]").forEach(button => {
+  button.addEventListener("click", () => {
+    const product = PRODUCTS.find(item => item.id === button.dataset.journeyWorkspace);
+    if (!product) return;
+    setWorkspace(product);
+    input.value = button.dataset.journeyPrompt || `Help me work on ${product.name} for my business`;
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+});
+
 function renderTask(task) {
   const row = el("label", `task-row${task.status === "done" ? " is-done" : ""}`);
   const checkbox = document.createElement("input");
