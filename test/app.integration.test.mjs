@@ -15,6 +15,8 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const database = await mf.getD1Database("DB");
     const migration = await readFile(new URL("../migrations/0001_initial.sql", import.meta.url), "utf8");
     for (const statement of migration.split(";").map(item => item.trim()).filter(Boolean)) await database.prepare(statement).run();
+    const learningMigration = await readFile(new URL("../migrations/0002_customer_build_memory.sql", import.meta.url), "utf8");
+    for (const statement of learningMigration.split(";").map(item => item.trim()).filter(Boolean)) await database.prepare(statement).run();
 
     const base = "http://chatbliz.test";
     const health = await mf.dispatchFetch(`${base}/api/health`);
@@ -73,6 +75,20 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const history = await mf.dispatchFetch(`${base}/api/chat`, { headers: { cookie } });
     assert.equal((await history.json()).messages.length, 2);
 
+    const createBuild = await mf.dispatchFetch(`${base}/api/builds`, {
+      method: "POST", headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ businessName: "Nokwazi Cover", businessType: "Insurance broker", problem: "Customers struggle to request a quote", goal: "Let customers request a quote online" })
+    });
+    assert.equal(createBuild.status, 201);
+    const savedBuild = (await createBuild.json()).build;
+    const saveLearning = await mf.dispatchFetch(`${base}/api/builds/${savedBuild.id}`, {
+      method: "PATCH", headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ learningNotes: "Customers want a call-back option after submitting the quote request." })
+    });
+    assert.equal((await saveLearning.json()).build.learningNotes, "Customers want a call-back option after submitting the quote request.");
+    const buildList = await mf.dispatchFetch(`${base}/api/builds`, { headers: { cookie } });
+    assert.equal((await buildList.json()).builds[0].id, savedBuild.id);
+
     const createTask = await mf.dispatchFetch(`${base}/api/tasks`, {
       method: "POST", headers: { cookie, "content-type": "application/json" },
       body: JSON.stringify({ title: "Record this week's qualified enquiries", sourceMessageId: chatResult.assistantMessageId })
@@ -121,6 +137,13 @@ test("Chatbliz accounts, profiles, conversations and tasks persist in D1", async
     const secondCookie = secondSignup.headers.get("set-cookie")?.split(";", 1)[0];
     const secondOwnerTasks = await mf.dispatchFetch(`${base}/api/tasks`, { headers: { cookie: secondCookie } });
     assert.deepEqual((await secondOwnerTasks.json()).tasks, []);
+    const secondOwnerBuilds = await mf.dispatchFetch(`${base}/api/builds`, { headers: { cookie: secondCookie } });
+    assert.deepEqual((await secondOwnerBuilds.json()).builds, []);
+    const crossOwnerEdit = await mf.dispatchFetch(`${base}/api/builds/${savedBuild.id}`, {
+      method: "PATCH", headers: { cookie: secondCookie, "content-type": "application/json" },
+      body: JSON.stringify({ learningNotes: "This must not change the first owner's project." })
+    });
+    assert.equal(crossOwnerEdit.status, 404);
 
     const staticPage = await mf.dispatchFetch(`${base}/`);
     const staticHtml = await staticPage.text();
