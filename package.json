@@ -6,6 +6,7 @@
   "engines": { "node": ">=20.19" },
   "scripts": {
     "dev": "wrangler dev",
+    "start": "node server.mjs",
     "test": "node --test",
     "db:apply:local": "wrangler d1 migrations apply DB --local",
     "db:apply:remote": "wrangler d1 migrations apply DB --remote",
