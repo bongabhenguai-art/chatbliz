@@ -57,8 +57,8 @@ function setAuthMode(mode) {
   byId("auth-password").autocomplete = signup ? "new-password" : "current-password";
   byId("auth-title").textContent = signup ? "Create your workspace" : "Welcome back";
   byId("auth-copy").textContent = signup
-    ? "Create your secure account to save your business profile, conversations and tasks."
-    : "Sign in to return to your saved business workspace.";
+    ? "Create your account once. Chatbliz saves your business profile, conversations, tasks and customer project lessons to this private workspace."
+    : "Sign in to return to your saved business workspace. Chatbliz remembers this device while you keep using it.";
   byId("auth-submit").textContent = signup ? "Create account" : "Sign in";
   byId("auth-toggle").textContent = signup ? "Already have an account? Sign in" : "New to Chatbliz? Create an account";
   byId("auth-error").textContent = "";
