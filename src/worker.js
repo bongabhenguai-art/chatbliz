@@ -132,6 +132,19 @@ function profileShape(row) {
   };
 }
 
+function buildShape(row) {
+  return {
+    id: row.id,
+    businessName: row.business_name,
+    businessType: row.business_type,
+    problem: row.problem,
+    goal: row.goal,
+    learningNotes: row.learning_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
 async function handleApi(request, env) {
   if (!env.DB) return fail("Chatbliz storage is not configured.", 503);
   const { pathname } = new URL(request.url);
@@ -234,6 +247,52 @@ async function handleApi(request, env) {
     const profile = await env.DB.prepare("SELECT business_name, industry, location, website, whatsapp FROM business_profiles WHERE user_id = ?")
       .bind(user.id).first();
     return json({ user: { id: user.id, email: user.email, displayName: user.display_name }, profile: profileShape(profile) });
+  }
+
+  if (pathname === "/api/builds" && method === "GET") {
+    const { results } = await env.DB.prepare(`SELECT id, business_name, business_type, problem, goal, learning_notes, created_at, updated_at
+      FROM customer_builds WHERE owner_id = ? ORDER BY updated_at DESC LIMIT 100`).bind(user.id).all();
+    return json({ builds: (results || []).map(buildShape) });
+  }
+
+  if (pathname === "/api/builds" && method === "POST") {
+    let input;
+    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    let businessName, businessType, problem, goal;
+    try {
+      businessName = limitedText(input.businessName, 120, "Business name");
+      businessType = limitedText(input.businessType, 100, "Business type");
+      problem = limitedText(input.problem, 1000, "Customer need");
+      goal = limitedText(input.goal, 700, "Build goal");
+    } catch (error) { return fail(error.message); }
+    if (!businessName || !businessType || !problem || !goal) return fail("Complete the business, type, customer need and build goal.");
+    const id = crypto.randomUUID();
+    try {
+      await env.DB.prepare(`INSERT INTO customer_builds (id, owner_id, business_name, business_type, problem, goal)
+        VALUES (?, ?, ?, ?, ?, ?)`).bind(id, user.id, businessName, businessType, problem, goal).run();
+    } catch {
+      return fail("The customer build could not be saved. Please try again.", 500);
+    }
+    const saved = await env.DB.prepare(`SELECT id, business_name, business_type, problem, goal, learning_notes, created_at, updated_at
+      FROM customer_builds WHERE id = ? AND owner_id = ?`).bind(id, user.id).first();
+    if (!saved) return fail("The customer build did not verify in Chatbliz storage.", 500);
+    return json({ build: buildShape(saved) }, 201);
+  }
+
+  const buildMatch = pathname.match(/^\/api\/builds\/([\w-]+)$/u);
+  if (buildMatch && method === "PATCH") {
+    let input;
+    try { input = await readJson(request); } catch (error) { return fail(error.message); }
+    let learningNotes;
+    try { learningNotes = limitedText(input.learningNotes, 2000, "Learning notes"); }
+    catch (error) { return fail(error.message); }
+    await env.DB.prepare(`UPDATE customer_builds SET learning_notes = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+      WHERE id = ? AND owner_id = ?`).bind(learningNotes, buildMatch[1], user.id).run();
+    const saved = await env.DB.prepare(`SELECT id, business_name, business_type, problem, goal, learning_notes, created_at, updated_at
+      FROM customer_builds WHERE id = ? AND owner_id = ?`).bind(buildMatch[1], user.id).first();
+    if (!saved) return fail("Customer build not found.", 404);
+    if (saved.learning_notes !== learningNotes) return fail("The learning note did not verify in Chatbliz storage.", 500);
+    return json({ build: buildShape(saved) });
   }
 
   if (pathname === "/api/profile" && method === "PUT") {
