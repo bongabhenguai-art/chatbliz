@@ -25,6 +25,10 @@ Wrangler starts the app on its local development URL and uses a local D1 databas
 
 The current planning engine uses the tested business rules in `public/src/domain.mjs`. It is not an external AI model. AI-provider access, email verification and password recovery, WhatsApp, publishing, bookings, payments, and the four production integrations still need to be connected before those capabilities can be advertised as live.
 
+## How the workspaces connect
+
+The home screen guides an owner through a practical loop: **My Brand** clarifies the customer and promise; **My Website & App** turns that promise into a site or app brief; **My Studio** plans consistent content; and **My Business** tracks enquiries, sales, follow-ups and tasks. Customer response informs the next change to the brand, offer or content. Each journey button switches to that workspace and prefills a planning prompt in Chatbliz's saved conversation. In this version, the app can persist the profile, conversation and tasks; building a site, checking external brand listings, producing or publishing media, capturing leads, WhatsApp, bookings and payments require integrations that are not connected yet.
+
 ## Deploy to a dedicated Cloudflare Worker
 
 This app is configured for its own Worker, `chatbliz-os`, and a dedicated D1 database, `chatbliz-os-db`. It does not reuse the existing `zuxuru` Worker or `bonga-bhengu-db` database.
