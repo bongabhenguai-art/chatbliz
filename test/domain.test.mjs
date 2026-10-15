@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../src/domain.mjs";
+import { PACKAGES, PARTNERS, PRODUCTS, preparePlan } from "../public/src/domain.mjs";
 
 test("the four product workspaces and six partners are present", () => {
   assert.deepEqual(PRODUCTS.map(item => item.id), ["business", "brand", "website", "content"]);

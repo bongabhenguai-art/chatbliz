@@ -9,7 +9,25 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <div class="app-shell">
+    <main id="auth-screen" class="auth-screen" hidden>
+      <section class="auth-card" aria-labelledby="auth-title">
+        <a class="wordmark auth-brand" href="#home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
+        <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
+        <h1 id="auth-title">Your business workspace</h1>
+        <p id="auth-copy" class="welcome-copy">Create your secure account to save your business profile, conversations and tasks.</p>
+        <form id="auth-form" class="auth-form">
+          <label id="auth-name-label">Your name<input id="auth-name" name="displayName" autocomplete="name" minlength="2" maxlength="80" required></label>
+          <label>Email address<input id="auth-email" name="email" type="email" autocomplete="email" maxlength="254" required></label>
+          <label>Password<input id="auth-password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label>
+          <p id="auth-error" class="form-error" role="alert"></p>
+          <button id="auth-submit" class="send-button auth-submit" type="submit">Create account</button>
+        </form>
+        <button id="auth-toggle" class="text-button" type="button">Already have an account? Sign in</button>
+        <small class="auth-security">Passwords are hashed before storage. Chatbliz never needs your Google password.</small>
+      </section>
+    </main>
+
+    <div id="app-shell" class="app-shell" hidden>
       <aside class="sidebar" aria-label="Main navigation">
         <a class="wordmark" href="#home" aria-label="Chatbliz home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
         <p class="nav-label">WORKSPACES</p>
@@ -20,13 +38,13 @@
           <button class="nav-item" data-workspace="content"><span class="nav-icon">◉</span><span>My Studio</span></button>
         </nav>
         <div class="sidebar-note"><span class="status-dot"></span><span>Private business workspace<br><small>Connections are not set up yet</small></span></div>
-        <div class="sidebar-bottom"><span class="avatar">BB</span><span><strong>Bonga Bhengu</strong><small>Workspace owner</small></span><span class="more">•••</span></div>
+        <div class="sidebar-bottom"><span class="avatar" id="owner-avatar">CB</span><span><strong id="owner-name">Workspace owner</strong><small id="owner-email">Signed in</small></span><button id="sign-out" class="text-button sign-out" type="button">Sign out</button></div>
       </aside>
 
       <main id="home" class="main-content">
         <header class="topbar">
           <div class="breadcrumbs"><span>CHATBLIZ OS</span><span class="crumb-divider">/</span><strong id="active-workspace-label">MY BUSINESS</strong></div>
-          <div class="top-actions"><span class="connection-pill"><i></i> Local preview</span><button class="icon-button" type="button" aria-label="Settings">⚙</button></div>
+          <div class="top-actions"><span id="connection-status" class="connection-pill"><i></i> Checking storage</span></div>
         </header>
 
         <section class="welcome-row">
@@ -46,7 +64,7 @@
         <section class="conversation" aria-label="Chatbliz conversation">
           <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
           <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
-            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p>Hello Bonga. I’m here to help you build and grow your business. Tell me what you want to work on, and I’ll suggest a clear next step.</p><small>Planning only · no external actions have been taken</small></div></article>
+            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p id="greeting">Welcome to Chatbliz. Tell your business team what you are working on.</p><small>Conversations and tasks are saved to your account.</small></div></article>
           </div>
           <div class="suggestions" id="suggestions" aria-label="Suggested prompts"></div>
           <form id="chat-form" class="composer">
@@ -54,7 +72,26 @@
             <textarea id="message-input" rows="1" maxlength="4000" placeholder="Tell Chatbliz what your business needs…" required></textarea>
             <div class="composer-bottom"><span>Enter to send · Shift + Enter for a new line</span><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
           </form>
-          <p class="disclosure">Chatbliz currently prepares local plans. AI providers, account connections, WhatsApp, publishing, bookings and payments are not connected in this build.</p>
+          <p class="disclosure">Chatbliz saves your conversations and work to your account. Plans in this version are produced by the built-in business workflow; external AI, WhatsApp, publishing, bookings and payments are not connected.</p>
+        </section>
+
+        <section class="profile-section" aria-labelledby="profile-title">
+          <div class="section-heading"><div><p class="eyebrow">CHATBLIZ WORKSPACE SETUP</p><h2 id="profile-title">Your business profile</h2></div><span class="muted-label">Saved to your account</span></div>
+          <form id="profile-form" class="profile-form">
+            <label>Your name<input id="profile-display-name" maxlength="80" required></label>
+            <label>Business name<input id="profile-business-name" maxlength="120" placeholder="Your business"></label>
+            <label>Industry<input id="profile-industry" maxlength="100" placeholder="Fashion, food, services…"></label>
+            <label>Location<input id="profile-location" maxlength="120" placeholder="City or service area"></label>
+            <label>Website<input id="profile-website" maxlength="200" type="url" placeholder="https://"></label>
+            <label>WhatsApp number<input id="profile-whatsapp" maxlength="32" type="tel" placeholder="+27…"></label>
+            <button class="send-button profile-save" type="submit">Save profile</button>
+            <p id="profile-status" class="form-status" role="status"></p>
+          </form>
+        </section>
+
+        <section class="tasks-section" aria-labelledby="tasks-title">
+          <div class="section-heading"><div><p class="eyebrow">FOLLOW-THROUGH</p><h2 id="tasks-title">My business tasks</h2></div><span id="task-count" class="muted-label">Loading tasks</span></div>
+          <div id="task-list" class="task-list" aria-live="polite"></div>
         </section>
 
         <section class="products-section" aria-labelledby="products-title">

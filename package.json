@@ -3,5 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test" }
+  "engines": { "node": ">=20.19" },
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test",
+    "db:apply:local": "wrangler d1 migrations apply DB --local",
+    "db:apply:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy": "npm run db:apply:remote && wrangler deploy"
+  },
+  "devDependencies": {
+    "miniflare": "^3.20250718.3",
+    "wrangler": "^4.151.0"
+  }
 }
