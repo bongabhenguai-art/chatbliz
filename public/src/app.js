@@ -91,7 +91,10 @@ byId("auth-form").addEventListener("submit", async event => {
 
 byId("sign-out").addEventListener("click", async () => {
   try { await api("/api/auth/logout", { method: "POST", body: "{}" }); }
-  catch { /* The server may already have expired this session. */ }
+  catch {
+    byId("connection-status").textContent = "Sign-out could not be confirmed. Please retry.";
+    return;
+  }
   setAuthMode("login");
   showAuth();
 });
