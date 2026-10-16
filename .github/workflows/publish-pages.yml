@@ -32,6 +32,12 @@ jobs:
           if [ -f script.js ]; then cp script.js public/; fi
           find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.svg' -o -name '*.png' -o -name '*.jpg' -o -name '*.webp' \) -exec cp {} public/ \;
           touch public/.nojekyll
+      - name: Verify referenced entrypoints
+        run: |
+          test -f public/index.html
+          test -f public/src/app.js
+          test -f public/src/reports-ui.js
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
           path: public
