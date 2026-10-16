@@ -4,6 +4,10 @@ import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { handleTasks, configured, authorized } from "./backend/tasks.mjs";
 import {askMiniMax,minimaxConfigured,validateMiniMaxRequest} from "./backend/minimax.mjs";
+import {createEngineeringBrief,recordMetric,summarizeMetrics} from "./backend/engineering.mjs";
+const recentMetrics=[];
+function observe(operation,durationMs,ok){recentMetrics.push(recordMetric({operation,durationMs,ok}));if(recentMetrics.length>200)recentMetrics.shift()}
+
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT) || 3000;
@@ -12,6 +16,19 @@ const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=ut
 createServer(async (req,res)=>{
  try {
   const {pathname}=new URL(req.url,"http://localhost");
+  if(pathname==="/api/ops/metrics"){
+   if(req.method!=="GET"){res.writeHead(405).end();return}
+   if(!authorized(req)){res.writeHead(401,{"Content-Type":"application/json"}).end(JSON.stringify({error:"Unauthorized"}));return}
+   res.writeHead(200,{"Content-Type":"application/json","Cache-Control":"no-store"}).end(JSON.stringify({window:"last 200 observed AI operations; in-memory",...summarizeMetrics(recentMetrics)}));return;
+  }
+  if(pathname==="/api/ai/engineering"){
+   const respond=(status,data)=>res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify(data));
+   if(req.method!=="POST")return respond(405,{error:"Method not allowed"});
+   if(!authorized(req))return respond(401,{error:"Unauthorized"});
+   if(!minimaxConfigured())return respond(503,{error:"MiniMax not configured"});
+   const started=Date.now();let ok=false;
+   try{let raw="";for await(const chunk of req){raw+=chunk;if(raw.length>14000)return respond(413,{error:"Request too large"})}const brief=createEngineeringBrief(JSON.parse(raw));const advice=await askMiniMax(brief);ok=true;return respond(200,{area:"engineering",provider:"minimax",advice,mode:"advisory-only"})}catch(e){return respond(400,{error:e.name==="AbortError"?"Provider timed out":e.message})}finally{observe("engineering",Date.now()-started,ok)}
+  }
   if(pathname==="/api/ai/chat"){
    const respond=(status,data)=>res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify(data));
    if(req.method!=="POST")return respond(405,{error:"Method not allowed"});
