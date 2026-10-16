@@ -1,0 +1,6 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {TwinMemory} from "../twin/memory.mjs";
+import {TwinQueue} from "../twin/queue.mjs";
+test("memory retains bounded events and requires approval to learn",()=>{const m=new TwinMemory({maxEvents:2});m.append({type:"incident",summary:"Studio audio missing"});m.append({type:"diagnosis",summary:"Microphone track not attached"});m.append({type:"test-result",summary:"Track attachment verified"});assert.equal(m.snapshot().events.length,2);assert.throws(()=>m.learnPreference("studio_mode","headphones"),/approval/);m.learnPreference("studio_mode","headphones",{ownerApproved:true});assert.equal(m.snapshot().preferences.studio_mode,"headphones");m.clear();assert.equal(m.snapshot().events.length,0)});
+test("queue blocks unapproved deployment and records review",()=>{const q=new TwinQueue();const t=q.enqueue({workspace:"my-website-app",action:"deploy",description:"Deploy repaired studio"});assert.throws(()=>q.markComplete(t.id,{result:"deployed"}),/Approval/);q.submitEvidence(t.id,{summary:"CI and reviewer passed",testsPassed:true,reviewed:true});assert.throws(()=>q.approve(t.id,{actor:"owner",approved:false}),/approval/);q.approve(t.id,{actor:"owner",approved:true});assert.equal(q.markComplete(t.id,{result:"deployment verified"}).status,"completed")});
