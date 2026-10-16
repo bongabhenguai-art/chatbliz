@@ -1,0 +1,23 @@
+export const MODULES=Object.freeze([
+{id:"brand-identity",workspace:"brand",name:"Brand Identity",description:"Create a brand brief, audience and positioning",status:"local"},
+{id:"brand-research",workspace:"brand",name:"Market Research",description:"Competitor and audience research requiring verified sources",status:"integration"},
+{id:"brand-assets",workspace:"brand",name:"Logo & Assets",description:"Brand visuals and asset management",status:"integration"},
+{id:"website-builder",workspace:"website",name:"Website Generator",description:"Generate a static website and export source files",status:"local",href:"../builder/index.html"},
+{id:"code-editor",workspace:"website",name:"Code Editor & Preview",description:"Edit generated HTML and CSS with a sandboxed preview",status:"local",href:"../builder/index.html"},
+{id:"github",workspace:"website",name:"GitHub Sync",description:"Connect a project repository through official authorization",status:"integration"},
+{id:"ai-code",workspace:"website",name:"AI Code Agent",description:"Generate, debug and refactor project source",status:"integration"},
+{id:"cloud-runner",workspace:"website",name:"Cloud Development Environment",description:"Isolated dependency installation and application execution",status:"infrastructure"},
+{id:"database",workspace:"website",name:"Project Database",description:"Provision managed database with per-project credentials",status:"infrastructure"},
+{id:"deployment",workspace:"website",name:"Deploy & Domains",description:"Deploy projects and attach verified domains",status:"integration"},
+{id:"studio-images",workspace:"content",name:"Image Studio",description:"Produce campaign and product images",status:"integration"},
+{id:"studio-video",workspace:"content",name:"Video Studio",description:"Create and edit business videos",status:"integration"},
+{id:"studio-live",workspace:"content",name:"Podcast & Livestream",description:"Capture cameras, mix scenes and publish live",status:"integration"},
+{id:"studio-publishing",workspace:"content",name:"Social Publishing",description:"Schedule and post content to authorized accounts",status:"integration"},
+{id:"business-profile",workspace:"business",name:"Business Profile",description:"Maintain one profile across Chatbliz workspaces",status:"local",href:"../index.html#journey"},
+{id:"workforce",workspace:"business",name:"AI Workforce",description:"Assign, review and track local business tasks",status:"local",href:"../workforce/index.html"},
+{id:"crm",workspace:"business",name:"CRM & Sales",description:"Manage leads, deals and follow-ups",status:"integration"},
+{id:"visibility",workspace:"business",name:"Digital Visibility",description:"Audit public search presence with evidence",status:"integration"},
+{id:"finance",workspace:"business",name:"Finance & Payments",description:"Track invoices, payouts and financial performance",status:"integration"},
+{id:"automation",workspace:"business",name:"Workflow Automation",description:"Execute authorized multi-step business workflows",status:"integration"},
+{id:"analytics",workspace:"business",name:"Analytics",description:"Measure customers, conversion and revenue",status:"integration"}
+]);export const WORKSPACES=Object.freeze([{id:"brand",name:"My Brand"},{id:"website",name:"My Website & App"},{id:"content",name:"My Studio"},{id:"business",name:"My Business"}]);export function getModules(workspace){if(workspace&&!WORKSPACES.some(w=>w.id===workspace))throw new Error("Invalid workspace");return MODULES.filter(m=>!workspace||m.workspace===workspace)}export function moduleSummary(){return{total:MODULES.length,local:MODULES.filter(m=>m.status==="local").length,integrations:MODULES.filter(m=>m.status==="integration").length,infrastructure:MODULES.filter(m=>m.status==="infrastructure").length}}

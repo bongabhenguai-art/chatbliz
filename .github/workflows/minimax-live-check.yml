@@ -1,0 +1,26 @@
+name: MiniMax optional live connectivity check
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-provider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify provider credentials are configured
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL }}
+        run: |
+          node --input-type=module -e 'if (!process.env.MINIMAX_API_KEY || !process.env.MINIMAX_MODEL) { console.error("Configure MINIMAX_API_KEY secret and MINIMAX_MODEL variable before running"); process.exit(1) } console.log("Provider configuration found; starting one low-token connectivity request")'
+      - name: Perform one bounded MiniMax API request
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL }}
+        run: |
+          node --input-type=module -e 'import {askMiniMax} from "./backend/minimax.mjs"; try { const response=await askMiniMax("Reply only with READY."); if (!response.trim()) throw Error("Empty response"); console.log("MiniMax API connectivity: verified; received nonempty response."); } catch (error) { console.error("MiniMax connectivity failed:",error.name); process.exitCode=1 }'

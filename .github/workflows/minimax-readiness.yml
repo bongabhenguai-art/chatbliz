@@ -1,0 +1,28 @@
+name: MiniMax engineering readiness
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  engineering-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Chatbliz backend and MiniMax adapter
+        run: |
+          node --check server.mjs
+          node --check backend/minimax.mjs
+          node --check backend/engineering.mjs
+          npm test
+      - name: Check MiniMax integration configuration without exposing secrets
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_MODEL: ${{ vars.MINIMAX_MODEL }}
+        run: |
+          node --input-type=module -e 'console.log("MiniMax credentials configured:", Boolean(process.env.MINIMAX_API_KEY)); console.log("MiniMax model configured:", Boolean(process.env.MINIMAX_MODEL)); console.log("No provider request performed.")'

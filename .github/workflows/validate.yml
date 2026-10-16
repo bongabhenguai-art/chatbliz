@@ -1,0 +1,23 @@
+name: Chatbliz validation
+on:
+  push:
+    branches: [main, feature/ai-business-intelligence-workspaces]
+  pull_request:
+    branches: [main]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test
+        run: npm test
+      - name: Syntax checks
+        run: |
+          node --check server.mjs
+          node --check backend/tasks.mjs
+          node --check workforce/workforce.js
