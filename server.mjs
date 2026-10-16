@@ -14,7 +14,7 @@ createServer(async (req,res)=>{
   if(pathname==="/api/tasks") return await handleTasks(req,res);
   if(pathname==="/api/status"){res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify({service:"Chatbliz OS",taskApiConfigured:configured(),authentication:"admin token only; no browser session",sharedTaskUiConnected:false}));return;}
   if(req.method!=="GET"&&req.method!=="HEAD"){res.writeHead(405,{"Content-Type":"text/plain"}).end("Method not allowed");return}
-  const publicFiles=new Set(["/","/index.html","/styles.css","/src/app.js","/src/domain.mjs","/src/journey.mjs","/src/journey-ui.js","/workforce/","/workforce/index.html","/workforce/workforce.js","/workforce/business-modules.mjs","/builder/","/builder/index.html","/builder/builder.js","/builder/project.mjs"]);
+  const publicFiles=new Set(["/","/index.html","/styles.css","/src/app.js","/src/domain.mjs","/src/journey.mjs","/src/journey-ui.js","/workforce/","/workforce/index.html","/workforce/workforce.js","/workforce/business-modules.mjs","/builder/","/builder/index.html","/builder/builder.js","/builder/project.mjs","/modules/","/modules/index.html","/modules/modules.js","/modules/registry.mjs"]);
   if(!publicFiles.has(pathname)){res.writeHead(404,{"Content-Type":"text/plain; charset=utf-8"}).end("Not found");return}
   let file=resolve(join(root,decodeURIComponent(pathname)));
   if(file!==root&&!file.startsWith(root+sep)){res.writeHead(403).end("Forbidden");return}
