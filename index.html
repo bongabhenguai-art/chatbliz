@@ -58,6 +58,13 @@
         </section>
 
         <section id="system-reports" class="conversation" aria-label="My system report"></section>
+        <section class="conversation" aria-label="Voice business reports" id="voice-business-reports">
+          <div class="section-heading"><div><p class="eyebrow">MY BUSINESS · VOICE ASSISTANT</p><h2>Three daily business reports</h2></div><span class="muted-label">08:00 · 13:00 · 19:00 SAST</span></div>
+          <p>Hear a morning, afternoon or evening business briefing. Chat history is used as context; unknown live sales data stays unverified.</p>
+          <div class="suggestions"><button type="button" data-voice-slot="morning">Morning report</button><button type="button" data-voice-slot="afternoon">Afternoon report</button><button type="button" data-voice-slot="evening">Evening report</button><button type="button" id="voice-speak">▶ Speak</button><button type="button" id="voice-stop">■ Stop</button></div>
+          <p id="voice-report-text" role="status" aria-live="polite"></p>
+          <p class="disclosure">Browser voice playback requires speech synthesis support. This panel does not fetch payment, CRM or calendar records or send reports automatically.</p>
+        </section>
 
         <section class="products-section" aria-labelledby="products-title">
           <div class="section-heading"><div><p class="eyebrow">FOUR CORE SERVICES</p><h2 id="products-title">Your workspaces</h2></div><span class="muted-label">Shared capabilities, one Chatbliz account</span></div>
@@ -74,5 +81,6 @@
     </div>
     <script type="module" src="./src/app.js"></script>
     <script type="module" src="./src/reports-ui.js"></script>
+    <script type="module" src="./src/voice-reports-ui.js"></script>
   </body>
 </html>
