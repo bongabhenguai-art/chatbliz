@@ -1,3 +1,4 @@
+import { createLead, updateLead, leadSummary, readLeads, saveLeads } from "./business-crm.js";
 import { makeBusinessBriefing } from "../voice-briefings.mjs";
 import { createTask, summarizeTasks, readTasks, saveTasks, transitionTask } from "./business-tasks.js";
 
@@ -78,3 +79,49 @@ document.getElementById("voice-speak").addEventListener("click", () => {
 });
 document.getElementById("voice-stop").addEventListener("click", () => { if ("speechSynthesis" in window) window.speechSynthesis.cancel(); });
 renderTasks(); show("morning");
+
+const crmKey = "chatbliz:leads:local-preview";
+let leads = readLeads(crmKey, ownerId);
+const crmPanel = document.createElement("section");
+const crmHeading = document.createElement("h3"); crmHeading.textContent = "Customer pipeline · local preview";
+const crmForm = document.createElement("form");
+const customerName = document.createElement("input"); customerName.placeholder="Customer name";customerName.required=true;customerName.maxLength=120;customerName.setAttribute("aria-label","Customer name");
+const customerNeed = document.createElement("input");customerNeed.placeholder="Customer business need";customerNeed.required=true;customerNeed.maxLength=500;customerNeed.setAttribute("aria-label","Customer need");
+const customerValue = document.createElement("input");customerValue.type="number";customerValue.min="0";customerValue.step="0.01";customerValue.placeholder="Estimated value R";customerValue.setAttribute("aria-label","Estimated rand value");
+const consentLabel=document.createElement("label");
+const customerConsent=document.createElement("input");customerConsent.type="checkbox";
+consentLabel.append(customerConsent,document.createTextNode(" Customer agreed to contact and local record keeping"));
+const saveCustomer=document.createElement("button");saveCustomer.type="submit";saveCustomer.textContent="Save customer";
+crmForm.append(customerName,customerNeed,customerValue,consentLabel,saveCustomer);
+const crmTotals=document.createElement("p");
+const crmRows=document.createElement("div");
+crmPanel.append(crmHeading,crmForm,crmTotals,crmRows);
+section.append(crmPanel);
+function renderCustomers(){
+  const stats=leadSummary(leads,ownerId);
+  crmTotals.textContent="Saved customers: "+stats.total+" · Confirmed qualified leads: "+stats.qualified+" · Estimated qualified pipeline: R"+stats.qualifiedPipelineZar.toLocaleString("en-ZA")+" (not revenue)";
+  crmRows.replaceChildren();
+  for(const lead of leads){
+    const line=document.createElement("div");
+    const label=document.createElement("span");label.textContent=lead.name+" — "+lead.need+" — "+lead.stage+" ";
+    line.append(label);
+    if(lead.stage==="new"){
+      const confirm=document.createElement("button");confirm.type="button";confirm.textContent="Confirm interest";
+      confirm.addEventListener("click",()=>{
+        if(!window.confirm("Has this customer genuinely confirmed interest?"))return;
+        leads=leads.map(l=>l.id===lead.id?updateLead(l,"qualified",{customerConfirmed:true}):l);
+        saveLeads(crmKey,ownerId,leads);renderCustomers();show(slot);
+      });
+      line.append(confirm);
+    }
+    crmRows.append(line);
+  }
+}
+crmForm.addEventListener("submit",event=>{
+  event.preventDefault();
+  try{
+    leads=[...leads,createLead({ownerId,name:customerName.value,need:customerNeed.value,consent:customerConsent.checked,estimatedValueZar:Number(customerValue.value||0)})];
+    saveLeads(crmKey,ownerId,leads);crmForm.reset();renderCustomers();show(slot);
+  }catch(error){output.textContent=error.message;}
+});
+renderCustomers();
