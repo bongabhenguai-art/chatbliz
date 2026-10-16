@@ -30,6 +30,7 @@ jobs:
           cp index.html styles.css public/
           if [ -f app.js ]; then cp app.js public/; fi
           if [ -f script.js ]; then cp script.js public/; fi
+          cp -R src public/
           find . -maxdepth 1 -type f \( -name '*.js' -o -name '*.svg' -o -name '*.png' -o -name '*.jpg' -o -name '*.webp' \) -exec cp {} public/ \;
           touch public/.nojekyll
       - name: Verify referenced entrypoints
