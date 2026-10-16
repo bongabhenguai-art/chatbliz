@@ -2,7 +2,8 @@ import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { handleTasks, configured } from "./backend/tasks.mjs";
+import { handleTasks, configured, authorized } from "./backend/tasks.mjs";
+import {askMiniMax,minimaxConfigured,validateMiniMaxRequest} from "./backend/minimax.mjs";
 
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT) || 3000;
@@ -11,8 +12,15 @@ const types = { ".html":"text/html; charset=utf-8", ".css":"text/css; charset=ut
 createServer(async (req,res)=>{
  try {
   const {pathname}=new URL(req.url,"http://localhost");
+  if(pathname==="/api/ai/chat"){
+   const respond=(status,data)=>res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify(data));
+   if(req.method!=="POST")return respond(405,{error:"Method not allowed"});
+   if(!authorized(req))return respond(401,{error:"Unauthorized"});
+   if(!minimaxConfigured())return respond(503,{error:"MiniMax is not configured"});
+   try{let raw="";for await(const chunk of req){raw+=chunk;if(raw.length>6000)return respond(413,{error:"Request too large"})}const message=validateMiniMaxRequest(JSON.parse(raw));const answer=await askMiniMax(message);return respond(200,{answer,provider:"minimax"})}catch(e){return respond(400,{error:e.name==="AbortError"?"Provider timed out":e.message})}
+  }
   if(pathname==="/api/tasks") return await handleTasks(req,res);
-  if(pathname==="/api/status"){res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify({service:"Chatbliz OS",taskApiConfigured:configured(),authentication:"admin token only; no browser session",sharedTaskUiConnected:false}));return;}
+  if(pathname==="/api/status"){res.writeHead(200,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}).end(JSON.stringify({service:"Chatbliz OS",taskApiConfigured:configured(),authentication:"admin token only; no browser session",sharedTaskUiConnected:false,minimaxConfigured:minimaxConfigured()}));return;}
   if(req.method!=="GET"&&req.method!=="HEAD"){res.writeHead(405,{"Content-Type":"text/plain"}).end("Method not allowed");return}
   const publicFiles=new Set(["/","/index.html","/styles.css","/src/app.js","/src/domain.mjs","/src/journey.mjs","/src/journey-ui.js","/workforce/","/workforce/index.html","/workforce/workforce.js","/workforce/business-modules.mjs","/builder/","/builder/index.html","/builder/builder.js","/builder/project.mjs","/modules/","/modules/index.html","/modules/modules.js","/modules/registry.mjs"]);
   if(!publicFiles.has(pathname)){res.writeHead(404,{"Content-Type":"text/plain; charset=utf-8"}).end("Not found");return}
