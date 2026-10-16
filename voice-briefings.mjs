@@ -2,6 +2,7 @@
 // This module does not synthesize audio, schedule jobs or access customer accounts.
 export const BRIEFING_TIMES = Object.freeze(["08:00", "13:00", "19:00"]);
 export const TIMEZONE = "Africa/Johannesburg";
+export const REVENUE_TARGETS_ZAR = Object.freeze({daily: Object.freeze({minimum:5000,stretch:20000}),weekly: Object.freeze({minimum:5000,stretch:20000})});
 const money = n => n == null ? "not verified" : new Intl.NumberFormat("en-ZA", { style: "currency", currency: "ZAR", maximumFractionDigits: 0 }).format(n);
 const number = n => n == null ? "not verified" : String(n);
 const safe = x => typeof x === "string" ? x.replace(/[<>]/g, "").slice(0, 250) : "";
@@ -29,7 +30,8 @@ export function makeBusinessBriefing(report, { slot = "morning", businessName = 
   ];
   if (Array.isArray(report.blockers) && report.blockers.length) lines.push("Blockers: " + report.blockers.slice(0, 3).map(safe).join("; ") + ".");
   if (Array.isArray(report.nextActions) && report.nextActions.length) lines.push("Next priorities: " + report.nextActions.slice(0, 3).map(safe).join("; ") + ".");
-  lines.push("Daily revenue goal: five thousand to twenty thousand rand. Weekly revenue goal: five thousand to twenty thousand rand. Both are targets, not verified results.");
+  lines.push("Primary daily revenue target: " + money(REVENUE_TARGETS_ZAR.daily.minimum) + " to " + money(REVENUE_TARGETS_ZAR.daily.stretch) + ". Additional weekly target: " + money(REVENUE_TARGETS_ZAR.weekly.minimum) + " to " + money(REVENUE_TARGETS_ZAR.weekly.stretch) + ". Targets are not verified sales.");
+  if (report.paidRevenueZar != null) lines.push("Progress toward daily minimum: " + Math.min(100, Math.round(report.paidRevenueZar / REVENUE_TARGETS_ZAR.daily.minimum * 100)) + " percent.");
   return { slot, timezone: TIMEZONE, text: lines.join(" "), source: "provided verified data only" };
 }
 export function slotForLocalHour(hour) {
