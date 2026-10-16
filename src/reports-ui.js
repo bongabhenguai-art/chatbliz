@@ -15,7 +15,7 @@ function show(report) {
   output.replaceChildren();
   const freshness = !report.timestamp ? "Report date unknown" : isFresh(report) ? "Dated today" : "Older report";
   const share=node("button","Share report to WhatsApp");share.type="button";share.className="suggestion";
-  share.addEventListener("click",()=>{const link=document.createElement("a");link.href="https://wa.me/?text="+encodeURIComponent(whatsappReport(report));link.target="_blank";link.rel="noopener noreferrer";link.click();status.textContent="WhatsApp opens a draft. Choose a recipient and review before sending; Chatbliz has not sent it."});output.append(share);
+  share.addEventListener("click",()=>{const link=document.createElement("a");link.href="https://wa.me/27817746377?text="+encodeURIComponent(whatsappReport(report));link.target="_blank";link.rel="noopener noreferrer";link.click();status.textContent="WhatsApp opens a draft. Choose a recipient and review before sending; Chatbliz has not sent it."});output.append(share);
   output.append(node("p",freshness+" · "+(report.timestamp ? new Date(report.timestamp).toLocaleString("en-ZA",{timeZone:"Africa/Johannesburg"})+" SAST" : "No valid date supplied")));
   output.append(node("p","Imported report · source statements and AI recommendations require review. Completed work is not independently verified."));
   if (report.sources.length) {
