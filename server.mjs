@@ -1,3 +1,4 @@
+import { businessApi } from "./business-api.mjs";
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, resolve, sep } from "node:path";
@@ -20,6 +21,7 @@ const types = {
 createServer(async (req, res) => {
   try {
     const { pathname } = new URL(req.url, "http://localhost");
+    if (await businessApi(req, res, pathname)) return;
     let file = resolve(join(root, decodeURIComponent(pathname)));
     if (file !== root && !file.startsWith(root + sep)) {
       res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" }).end("Forbidden");
