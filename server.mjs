@@ -20,7 +20,20 @@ const types = {
 createServer(async (req, res) => {
   try {
     const { pathname } = new URL(req.url, "http://localhost");
-    let file = resolve(join(root, decodeURIComponent(pathname)));
+    if (pathname === "/healthz") {
+      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }).end(JSON.stringify({ status: "ok", service: "chatbliz-os" }));
+      return;
+    }
+    const decoded = decodeURIComponent(pathname);
+    const segments = decoded.split("/");
+    const forbidden = segments.some(segment => segment.startsWith(".") || ["test", "tests", "docs", "node_modules"].includes(segment))
+      || ["/package.json", "/server.mjs"].includes(decoded)
+      || decoded.startsWith("/src/publisher-") || decoded === "/src/publishing.mjs";
+    if (forbidden) {
+      res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not found");
+      return;
+    }
+    let file = resolve(join(root, decoded));
     if (file !== root && !file.startsWith(root + sep)) {
       res.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" }).end("Forbidden");
       return;
