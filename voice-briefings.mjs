@@ -29,7 +29,7 @@ export function makeBusinessBriefing(report, { slot = "morning", businessName = 
   ];
   if (Array.isArray(report.blockers) && report.blockers.length) lines.push("Blockers: " + report.blockers.slice(0, 3).map(safe).join("; ") + ".");
   if (Array.isArray(report.nextActions) && report.nextActions.length) lines.push("Next priorities: " + report.nextActions.slice(0, 3).map(safe).join("; ") + ".");
-  lines.push("Weekly revenue goal: five thousand to twenty thousand rand. This is a target, not a verified result.");
+  lines.push("Daily revenue goal: five thousand to twenty thousand rand. Weekly revenue goal: five thousand to twenty thousand rand. Both are targets, not verified results.");
   return { slot, timezone: TIMEZONE, text: lines.join(" "), source: "provided verified data only" };
 }
 export function slotForLocalHour(hour) {
