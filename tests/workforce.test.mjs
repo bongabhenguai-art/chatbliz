@@ -1,6 +1,7 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {BUSINESS_MODULES,TASK_STAGES,createTask,advanceTask} from '../workforce/business-modules.mjs';
-test('module catalog has unique entries',()=>{assert.equal(BUSINESS_MODULES.length,14);assert.equal(new Set(BUSINESS_MODULES.map(m=>m.name)).size,14)});
-test('creates an intake task for a known module',()=>{const t=createTask('Find missing SEO pages','Gap Fixer');assert.equal(t.status,'intake');assert.equal(t.module,'Gap Fixer')});
-test('rejects blank tasks and unknown modules',()=>{assert.throws(()=>createTask(' ','Gap Fixer'));assert.throws(()=>createTask('Do work','Unknown'))});
-test('requires evidence and approval to mark completed',()=>{const t=createTask('Audit','Authority Control');assert.throws(()=>advanceTask(t,'completed'));assert.equal(advanceTask({...t,evidence:['report'],approvals:['owner']},'completed').status,'completed')});
-test('rejects invalid statuses',()=>{const t=createTask('Audit','Authority Control');assert.ok(TASK_STAGES.includes('verified'));assert.throws(()=>advanceTask(t,'fake'))});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {BUSINESS_MODULES,TASK_STAGES,createTask,advanceTask} from '../workforce/business-modules.mjs';
+test('module catalog has 14 unique entries',()=>{assert.equal(BUSINESS_MODULES.length,14);assert.equal(new Set(BUSINESS_MODULES.map(m=>m.name)).size,14)});
+test('task intake and validation',()=>{const t=createTask('Find missing SEO pages','Gap Fixer');assert.equal(t.status,'intake');assert.equal(t.module,'Gap Fixer');assert.throws(()=>createTask(' ','Gap Fixer'));assert.throws(()=>createTask('Do work','Unknown'));assert.throws(()=>createTask('x'.repeat(4001),'Gap Fixer'))});
+test('ordered task workflow and assignment',()=>{let t=createTask('Audit','Authority Control');assert.throws(()=>advanceTask(t,'completed'));t=advanceTask(t,'triage');assert.throws(()=>advanceTask(t,'assigned'));t=advanceTask({...t,assignee:'Business Fixer'},'assigned');t=advanceTask(t,'in progress');t=advanceTask(t,'awaiting approval');assert.throws(()=>advanceTask(t,'verified'));t=advanceTask({...t,evidence:['Review report'],approvals:['Owner']},'verified');t=advanceTask(t,'completed');assert.equal(t.status,'completed');assert.equal(t.history.length,7);assert.throws(()=>advanceTask(t,'in progress'))});
+test('invalid stages rejected',()=>{assert.ok(TASK_STAGES.includes('verified'));assert.throws(()=>advanceTask(createTask('Audit','Authority Control'),'fake'))});
