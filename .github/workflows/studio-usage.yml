@@ -35,4 +35,6 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/003_task_event_integrity.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/migrations/004_studio_usage.sql
       - name: Test concurrent Studio reservations
-        run: node scripts/integration/studio-usage.mjs
+        run: |
+          node scripts/integration/studio-usage.mjs
+          node scripts/integration/studio-lifecycle.mjs
