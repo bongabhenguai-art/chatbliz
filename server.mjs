@@ -95,6 +95,12 @@ createServer(async (req, res) => {
     }
     if (pathname.startsWith("/api/")) return taskApi(req, res, pathname);
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { error: "Method not allowed" });
+    // Serve only files required by the customer UI. Backend modules are never public.
+    const publicPaths = new Set([
+      "/", "/index.html", "/styles.css",
+      "/src/app.js", "/src/domain.mjs", "/src/reports-ui.js", "/src/reports.mjs"
+    ]);
+    if (!publicPaths.has(pathname)) return json(res, 404, { error: "Not found" });
     const decoded = decodeURIComponent(pathname);
     const segments = decoded.split("/");
     const forbidden = segments.some(segment => segment.startsWith(".") || ["test", "tests", "docs", "node_modules", "db", "scripts"].includes(segment))
