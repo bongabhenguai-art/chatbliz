@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0b0b0b">
+    <meta name="color-scheme" content="dark">
+    <link rel="preload" href="./styles.css" as="style">
     <meta name="description" content="Chatbliz OS — your business partner in your hands. Plan your business, brand, website and content in one chat-first workspace.">
     <title>Chatbliz OS — Your Business Partner</title>
     <link rel="stylesheet" href="./styles.css">
@@ -44,7 +46,7 @@
         </section>
 
         <section class="conversation" aria-label="Chatbliz conversation">
-          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
+          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><button id="export-local-chat" class="icon-button" type="button" title="Export business conversation" aria-label="Export business conversation">Export chat</button><button id="clear-local-history" class="icon-button" type="button" title="Clear saved chat" aria-label="Clear saved chat">Clear chat</button><span class="conversation-status"><i></i> Ready to plan</span></div>
           <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
             <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p>Hello Bonga. I’m here to help you build and grow your business. Tell me what you want to work on, and I’ll suggest a clear next step.</p><small>Planning only · no external actions have been taken</small></div></article>
           </div>
@@ -54,9 +56,17 @@
             <textarea id="message-input" rows="1" maxlength="4000" placeholder="Tell Chatbliz what your business needs…" required></textarea>
             <div class="composer-bottom"><span>Enter to send · Shift + Enter for a new line</span><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
           </form>
-          <p class="disclosure">Chatbliz currently prepares local plans. AI providers, account connections, WhatsApp, publishing, bookings and payments are not connected in this build.</p>
+          <p id="capability-status" class="disclosure" role="status">Checking service capabilities…</p>
+          <p class="disclosure">This planning conversation is saved only in this browser, not synced to a customer account. Clear chat removes it. Export chat downloads a Markdown copy. Chatbliz currently prepares local plans. AI providers, account connections, WhatsApp, publishing, bookings and payments are not connected in this build.</p>
         </section>
 
+        <section class="conversation" aria-labelledby="tasks-title">
+          <div class="section-heading"><div><p class="eyebrow">LOCAL TASK BOARD</p><h2 id="tasks-title">My business tasks</h2></div><span class="muted-label">Saved on this device · not cloud synced</span></div>
+          <form id="task-form" class="composer"><label for="task-input">Add a business task</label><input id="task-input" maxlength="240" required placeholder="e.g. Follow up with five customers"><button class="send-button" type="submit">Add task</button></form>
+          <p id="task-hint" class="disclosure">Chat requests can be added as tasks after your review.</p>
+          <label for="task-filter">Show tasks</label> <select id="task-filter"><option value="all">All</option><option value="open">Open</option><option value="completed">Completed</option></select> <span id="task-count" aria-live="polite"></span> <button id="export-local-tasks" class="icon-button" type="button">Export tasks</button>
+          <div id="task-board" role="list" aria-live="polite"></div>
+        </section>
         <section id="system-reports" class="conversation" aria-label="My system report"></section>
 
         <section class="products-section" aria-labelledby="products-title">
