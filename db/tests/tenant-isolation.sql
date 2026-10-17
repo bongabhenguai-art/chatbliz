@@ -38,5 +38,35 @@ BEGIN
     RAISE EXCEPTION 'Cross-business read was allowed';
   END IF;
 END $$;
+-- A viewer may read only their own business tasks and may not create tasks.
+SELECT set_config('app.user_id','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+SELECT set_config('app.business_id','22222222-2222-4222-8222-222222222222',true);
+DO $
+DECLARE blocked boolean := false;
+BEGIN
+  IF (SELECT count(*) FROM business_tasks) <> 1 THEN
+    RAISE EXCEPTION 'Viewer should read exactly one own-business task';
+  END IF;
+  BEGIN
+    INSERT INTO business_tasks(id,business_id,request)
+    VALUES ('33333333-3333-4333-8333-333333333333',
+            '22222222-2222-4222-8222-222222222222',
+            'Viewer must not create this');
+  EXCEPTION WHEN insufficient_privilege THEN
+    blocked := true;
+  END;
+  IF NOT blocked THEN
+    RAISE EXCEPTION 'Viewer was able to insert a task';
+  END IF;
+END $;
+-- No authenticated identity must reveal no task records.
+SELECT set_config('app.user_id','',true);
+SELECT set_config('app.business_id','',true);
+DO $
+BEGIN
+  IF (SELECT count(*) FROM business_tasks) <> 0 THEN
+    RAISE EXCEPTION 'Unauthenticated context exposed tasks';
+  END IF;
+END $;
 RESET ROLE;
 ROLLBACK;
