@@ -8,6 +8,7 @@ import { createTaskStore } from "./src/task-store.mjs";
 const root = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const port = Number(process.env.PORT) || 3000;
 const taskStore = createTaskStore({ filePath: process.env.CHATBLIZ_TASK_FILE || join(root, ".data", "tasks.json") });
+const cacheableAssets = new Set([".css", ".js", ".mjs", ".svg", ".png", ".jpg", ".ico"]);
 const types = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -111,7 +112,14 @@ createServer(async (req, res) => {
     const info = await stat(file).catch(() => null);
     if (info?.isDirectory()) file = join(file, "index.html");
     const body = await readFile(file);
-    res.writeHead(200, { "Content-Type": types[extname(file)] || "application/octet-stream", "X-Content-Type-Options": "nosniff" });
+    res.writeHead(200, {
+      "Content-Type": types[extname(file)] || "application/octet-stream",
+      "X-Content-Type-Options": "nosniff",
+      "Cache-Control": cacheableAssets.has(extname(file)) ? "public, max-age=300" : "no-cache",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "X-Content-Type-Options": "nosniff"
+    });
     res.end(req.method === "HEAD" ? undefined : body);
   } catch {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not found");
