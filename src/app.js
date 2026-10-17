@@ -7,6 +7,17 @@ const planGrid = byId("plan-grid");
 const thread = byId("chat-thread");
 const input = byId("message-input");
 let selectedPartner = null;
+const HISTORY_KEY = "chatbliz-local-chat-v1";
+let history = [];
+try {
+  const stored = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  if (Array.isArray(stored)) history = stored.filter(m => ["user", "assistant"].includes(m?.role) && typeof m.text === "string" && m.text.length <= 8000).slice(-80);
+} catch { /* storage unavailable */ }
+function remember(role, text, status) {
+  history.push({ role, text, status });
+  history = history.slice(-80);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch { /* storage unavailable */ }
+}
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -83,7 +94,7 @@ function setWorkspace(product) {
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
 }
 
-function appendMessage(role, text, status) {
+function appendMessage(role, text, status, persist = true) {
   const article = el("article", `message ${role === "user" ? "user-message" : "assistant-message"}`);
   article.append(el("span", "message-avatar", role === "user" ? "BB" : "C"));
   const body = el("div", "message-body");
@@ -92,6 +103,7 @@ function appendMessage(role, text, status) {
   article.append(body);
   thread.append(article);
   thread.scrollTop = thread.scrollHeight;
+  if (persist) remember(role, text, status);
 }
 
 function sendMessage(value) {
@@ -125,4 +137,12 @@ input.addEventListener("keydown", event => {
     event.preventDefault();
     byId("chat-form").requestSubmit();
   }
+});
+
+for (const message of history) appendMessage(message.role, message.text, message.status, false);
+byId("clear-local-history")?.addEventListener("click", () => {
+  history = [];
+  try { localStorage.removeItem(HISTORY_KEY); } catch { /* storage unavailable */ }
+  thread.replaceChildren();
+  appendMessage("assistant", "Your local chat is cleared. What should we work on?", "Local planning only", false);
 });

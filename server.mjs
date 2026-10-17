@@ -84,8 +84,8 @@ createServer(async (req, res) => {
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { error: "Method not allowed" });
     const decoded = decodeURIComponent(pathname);
     const segments = decoded.split("/");
-    const forbidden = segments.some(segment => segment.startsWith(".") || ["test", "tests", "docs", "node_modules"].includes(segment))
-      || ["/package.json", "/server.mjs", "/src/task-store.mjs"].includes(decoded)
+    const forbidden = segments.some(segment => segment.startsWith(".") || ["test", "tests", "docs", "node_modules", "db", "scripts"].includes(segment))
+      || ["/package.json", "/server.mjs", "/src/task-store.mjs", "/src/postgres-task-repository.mjs"].includes(decoded)
       || decoded.startsWith("/src/publisher-") || decoded === "/src/publishing.mjs";
     if (forbidden) {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }).end("Not found");
