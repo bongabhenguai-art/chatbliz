@@ -34,6 +34,7 @@ test("public capabilities report does not claim unavailable services", async () 
     assert.equal(dev.status, 404);
     for (const privatePath of [
       "/src/postgres-task-repository.mjs",
+      "/src/customer-task-handler.mjs",
       "/src/task-store.mjs",
       "/db/migrations/001_foundation.sql",
       "/scripts/integration/postgres-repository.mjs",
