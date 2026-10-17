@@ -32,6 +32,21 @@ test("public capabilities report does not claim unavailable services", async () 
     assert.equal(data.customerTasks, "not-connected");
     const dev = await fetch(`http://127.0.0.1:${port}/api/dev/tasks`);
     assert.equal(dev.status, 404);
+    for (const privatePath of [
+      "/src/postgres-task-repository.mjs",
+      "/src/task-store.mjs",
+      "/db/migrations/001_foundation.sql",
+      "/scripts/integration/postgres-repository.mjs",
+      "/docs/customer-auth-contract.md",
+      "/.github/workflows/security.yml"
+    ]) {
+      const privateResponse = await fetch(`http://127.0.0.1:${port}${privatePath}`);
+      assert.equal(privateResponse.status, 404, `Private source exposed: ${privatePath}`);
+    }
+    const homepage = await fetch(`http://127.0.0.1:${port}/`);
+    assert.equal(homepage.status, 200);
+    assert.match(await homepage.text(), /Chatbliz OS/);
+
   } finally {
     child.kill();
     if (child.exitCode === null && child.signalCode === null) await once(child, "exit");
