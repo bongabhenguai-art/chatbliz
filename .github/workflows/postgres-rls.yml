@@ -1,0 +1,37 @@
+name: PostgreSQL isolation checks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres-rls:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_test_only
+          POSTGRES_DB: chatbliz_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d chatbliz_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres_test_only
+      PGDATABASE: chatbliz_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply foundational schema
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/001_foundation.sql
+      - name: Apply access policies
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/002_customer_access.sql
+      - name: Verify tenant isolation
+        run: psql -v ON_ERROR_STOP=1 -f db/tests/tenant-isolation.sql
