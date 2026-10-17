@@ -13,7 +13,10 @@ export function createCustomerTaskHandler({ verifySession, repository }) {
     };
     try {
       const session = await verifySession(req);
-      if (!session?.userId || !session?.businessId) return send(401, { error: "Sign in required" });
+      const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuid.test(session?.userId || "") || !uuid.test(session?.businessId || "")) {
+        return send(401, { error: "Sign in required" });
+      }
       const scope = { userId: session.userId, businessId: session.businessId };
       if (pathname === "/api/customer/tasks" && req.method === "GET") {
         return send(200, { tasks: await repository.list(scope) });
