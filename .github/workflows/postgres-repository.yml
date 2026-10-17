@@ -36,4 +36,4 @@ jobs:
       - name: Install test-only PostgreSQL driver
         run: npm install --no-save --no-package-lock pg@8
       - name: Exercise real PostgreSQL task repository
-        run: node test/integration/postgres-repository.mjs
+        run: node scripts/integration/postgres-repository.mjs
