@@ -255,6 +255,29 @@ byId("task-form")?.addEventListener("submit", event => {
 });
 renderTasks();
 
+byId("export-local-tasks")?.addEventListener("click", () => {
+  if (!localTasks.length) {
+    const hint = byId("task-hint");
+    if (hint) hint.textContent = "Add a task before exporting.";
+    return;
+  }
+  const documentText = [
+    "# Chatbliz OS — Business Task List",
+    "",
+    "Exported: " + new Date().toISOString(),
+    "Source: local browser tasks; not synchronized with customer accounts.",
+    "",
+    ...localTasks.map(t => (t.done ? "- [x] " : "- [ ] ") + t.title.replace(/\r?\n/g, " "))
+  ].join("\n");
+  const url = URL.createObjectURL(new Blob([documentText], { type: "text/markdown;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "chatbliz-business-tasks-" + new Date().toISOString().slice(0, 10) + ".md";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 byId("task-filter")?.addEventListener("change", event => {
   taskFilter = ["all", "open", "completed"].includes(event.target.value) ? event.target.value : "all";
   renderTasks();
