@@ -163,3 +163,34 @@ if (capabilityStatus) {
       capabilityStatus.textContent = "Backend status unavailable · local planning only";
     });
 }
+
+byId("export-local-chat")?.addEventListener("click", () => {
+  if (!history.length) {
+    appendMessage("assistant", "There is no saved conversation to export yet. Send a message to begin.", "Local planning only", false);
+    return;
+  }
+  const lines = [
+    "# Chatbliz OS — Business Conversation",
+    "",
+    "Exported: " + new Date().toISOString(),
+    "Source: local browser planning history; no external business actions are implied.",
+    "",
+    ...history.flatMap(message => [
+      "## " + (message.role === "user" ? "Business owner" : "Chatbliz planning assistant"),
+      "",
+      message.text,
+      "",
+      message.status ? "Status: " + message.status : "",
+      ""
+    ])
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "chatbliz-business-conversation-" + new Date().toISOString().slice(0, 10) + ".md";
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
