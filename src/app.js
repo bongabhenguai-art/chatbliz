@@ -7,6 +7,7 @@ const planGrid = byId("plan-grid");
 const thread = byId("chat-thread");
 const input = byId("message-input");
 let selectedPartner = null;
+let selectedSkill = null;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -33,6 +34,49 @@ for (const partner of PARTNERS) {
   });
   partnerList.append(button);
 }
+
+// Fetch and render existing messages
+async function loadMessages() {
+  try {
+    const res = await fetch('/api/messages');
+    if (res.ok) {
+      const items = await res.json();
+      for (const it of items) appendMessage('assistant', it.plan.response, `Saved: ${it.createdAt}`);
+    }
+  } catch (e) { console.error('Could not load messages', e); }
+}
+
+loadMessages();
+
+// Skills UI (kept simplified client-side)
+const skills = [
+  { id: 'scheduler', name: 'Scheduler', icon: '📅' },
+  { id: 'seo', name: 'SEO Analyzer', icon: '🔎' },
+  { id: 'copy', name: 'Copywriter', icon: '✍' }
+];
+const skillsContainer = el("div", "skills-container");
+skillsContainer.setAttribute("aria-label", "Skills");
+const skillsLabel = el("p", "nav-label", "SKILLS");
+const skillsList = el("nav", "skills-list");
+for (const skill of skills) {
+  const button = el("button", "skill-chip");
+  button.type = "button";
+  button.title = skill.description || skill.name;
+  button.setAttribute("aria-pressed", "false");
+  button.append(el("span", "skill-icon", skill.icon), el("span", "", skill.name));
+  button.addEventListener("click", () => {
+    selectedSkill = selectedSkill === skill.id ? null : skill.id;
+    for (const chip of skillsList.querySelectorAll("button")) {
+      const active = chip === button && selectedSkill === skill.id;
+      chip.classList.toggle("selected", active);
+      chip.setAttribute("aria-pressed", String(active));
+    }
+    input.focus();
+  });
+  skillsList.append(button);
+}
+skillsContainer.append(skillsLabel, skillsList);
+partnerList.parentNode.insertBefore(skillsContainer, partnerList.nextSibling);
 
 for (const product of PRODUCTS) {
   const card = el("article", "product-card");
@@ -94,23 +138,28 @@ function appendMessage(role, text, status) {
   thread.scrollTop = thread.scrollHeight;
 }
 
-function sendMessage(value) {
+async function sendMessage(value) {
   const text = value.trim();
   if (!text) return;
-  appendMessage("user", text, "Sent to your local Chatbliz preview");
-  const plan = preparePlan(text);
-  if (selectedPartner) {
-    const partner = PARTNERS.find(item => item.id === selectedPartner);
-    plan.partners = [partner.name];
-    plan.response = `${partner.name} can help with ${plan.product.name}. I’ve prepared this as a planning request. ${plan.product.status}. No external action has been taken.`;
-  }
-  appendMessage("assistant", plan.response, `Status: ${plan.status} · External execution: ${plan.execution}`);
-  setWorkspace(plan.product);
+  appendMessage("user", text, "Sending…");
+  try {
+    const res = await fetch('/api/messages', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ message: text, selectedPartner, selectedSkill }) });
+    if (res.ok) {
+      const saved = await res.json();
+      appendMessage('assistant', saved.plan.response, `Saved: ${saved.createdAt}`);
+      setWorkspace(saved.plan.product);
+    } else {
+      appendMessage('assistant', 'Failed to save message on server', 'Error');
+    }
+  } catch (e) { appendMessage('assistant', 'Network error', 'Error'); }
+
   selectedPartner = null;
   partnerList.querySelectorAll("button").forEach(button => {
     button.classList.remove("selected");
     button.setAttribute("aria-pressed", "false");
   });
+  selectedSkill = null;
+  skillsList.querySelectorAll("button").forEach(button => { button.classList.remove("selected"); button.setAttribute("aria-pressed","false"); });
   input.placeholder = "Tell Chatbliz what your business needs…";
 }
 
