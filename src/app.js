@@ -211,13 +211,17 @@ try {
 function saveTasks() {
   try { localStorage.setItem(TASKS_KEY, JSON.stringify(localTasks)); } catch { /* storage may be disabled */ }
 }
+let taskFilter = "all";
 function renderTasks() {
   taskBoard.replaceChildren();
-  if (!localTasks.length) {
-    taskBoard.append(el("p", "disclosure", "No tasks yet. Add your first business action above."));
+  const visible = localTasks.filter(t => taskFilter === "all" || (taskFilter === "open" ? !t.done : t.done));
+  const count = byId("task-count");
+  if (count) count.textContent = localTasks.filter(t => !t.done).length + " open · " + localTasks.filter(t => t.done).length + " completed";
+  if (!visible.length) {
+    taskBoard.append(el("p", "disclosure", localTasks.length ? "No tasks match this filter." : "No tasks yet. Add your first business action above."));
     return;
   }
-  for (const task of localTasks) {
+  for (const task of visible) {
     const item = el("div", "message");
     item.setAttribute("role", "listitem");
     const checkbox = document.createElement("input");
@@ -250,3 +254,8 @@ byId("task-form")?.addEventListener("submit", event => {
   field.focus();
 });
 renderTasks();
+
+byId("task-filter")?.addEventListener("change", event => {
+  taskFilter = ["all", "open", "completed"].includes(event.target.value) ? event.target.value : "all";
+  renderTasks();
+});

@@ -64,6 +64,7 @@
           <div class="section-heading"><div><p class="eyebrow">LOCAL TASK BOARD</p><h2 id="tasks-title">My business tasks</h2></div><span class="muted-label">Saved on this device · not cloud synced</span></div>
           <form id="task-form" class="composer"><label for="task-input">Add a business task</label><input id="task-input" maxlength="240" required placeholder="e.g. Follow up with five customers"><button class="send-button" type="submit">Add task</button></form>
           <p id="task-hint" class="disclosure">Chat requests can be added as tasks after your review.</p>
+          <label for="task-filter">Show tasks</label> <select id="task-filter"><option value="all">All</option><option value="open">Open</option><option value="completed">Completed</option></select> <span id="task-count" aria-live="polite"></span>
           <div id="task-board" role="list" aria-live="polite"></div>
         </section>
         <section id="system-reports" class="conversation" aria-label="My system report"></section>
