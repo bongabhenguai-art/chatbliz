@@ -146,3 +146,20 @@ byId("clear-local-history")?.addEventListener("click", () => {
   thread.replaceChildren();
   appendMessage("assistant", "Your local chat is cleared. What should we work on?", "Local planning only", false);
 });
+
+const capabilityStatus = byId("capability-status");
+if (capabilityStatus) {
+  fetch("/api/capabilities", { cache: "no-store" })
+    .then(response => {
+      if (!response.ok) throw new Error("Service unavailable");
+      return response.json();
+    })
+    .then(data => {
+      capabilityStatus.textContent = data.planning === "local-browser"
+        ? "Planning available · AI execution and customer connections not connected"
+        : "Service status unavailable";
+    })
+    .catch(() => {
+      capabilityStatus.textContent = "Backend status unavailable · local planning only";
+    });
+}

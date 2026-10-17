@@ -80,6 +80,18 @@ createServer(async (req, res) => {
   try {
     const { pathname } = new URL(req.url, "http://localhost");
     if (pathname === "/healthz") return json(res, 200, { status: "ok", service: "chatbliz-os" });
+    if (pathname === "/api/capabilities" && req.method === "GET") {
+      return json(res, 200, {
+        service: "chatbliz-os",
+        planning: "local-browser",
+        chatHistory: "local-browser",
+        customerAuthentication: "not-connected",
+        aiExecution: "not-connected",
+        customerTasks: "not-connected",
+        payments: "not-connected",
+        publishing: "not-connected"
+      });
+    }
     if (pathname.startsWith("/api/")) return taskApi(req, res, pathname);
     if (req.method !== "GET" && req.method !== "HEAD") return json(res, 405, { error: "Method not allowed" });
     const decoded = decodeURIComponent(pathname);
