@@ -194,3 +194,53 @@ byId("export-local-chat")?.addEventListener("click", () => {
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
+
+const TASKS_KEY = "chatbliz-local-tasks-v1";
+const taskBoard = byId("task-board");
+let localTasks = [];
+try {
+  const saved = JSON.parse(localStorage.getItem(TASKS_KEY) || "[]");
+  if (Array.isArray(saved)) localTasks = saved.filter(t => typeof t?.id === "string" && typeof t?.title === "string" && t.title.length <= 240 && typeof t?.done === "boolean").slice(-200);
+} catch { /* private browsing may block storage */ }
+function saveTasks() {
+  try { localStorage.setItem(TASKS_KEY, JSON.stringify(localTasks)); } catch { /* storage may be disabled */ }
+}
+function renderTasks() {
+  taskBoard.replaceChildren();
+  if (!localTasks.length) {
+    taskBoard.append(el("p", "disclosure", "No tasks yet. Add your first business action above."));
+    return;
+  }
+  for (const task of localTasks) {
+    const item = el("div", "message");
+    item.setAttribute("role", "listitem");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.done;
+    checkbox.setAttribute("aria-label", "Complete " + task.title);
+    checkbox.addEventListener("change", () => { task.done = checkbox.checked; saveTasks(); renderTasks(); });
+    const label = el("span", "", task.title);
+    if (task.done) label.style.textDecoration = "line-through";
+    const remove = el("button", "icon-button", "Remove");
+    remove.type = "button";
+    remove.setAttribute("aria-label", "Remove " + task.title);
+    remove.addEventListener("click", () => {
+      localTasks = localTasks.filter(t => t.id !== task.id);
+      saveTasks(); renderTasks();
+    });
+    item.append(checkbox, label, remove);
+    taskBoard.append(item);
+  }
+}
+byId("task-form")?.addEventListener("submit", event => {
+  event.preventDefault();
+  const field = byId("task-input");
+  const title = field.value.trim();
+  if (!title || title.length > 240 || localTasks.length >= 200) return;
+  localTasks.unshift({ id: crypto.randomUUID(), title, done: false });
+  saveTasks();
+  renderTasks();
+  field.value = "";
+  field.focus();
+});
+renderTasks();
