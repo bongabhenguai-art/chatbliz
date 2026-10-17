@@ -117,6 +117,12 @@ function sendMessage(value) {
     plan.response = `${partner.name} can help with ${plan.product.name}. I’ve prepared this as a planning request. ${plan.product.status}. No external action has been taken.`;
   }
   appendMessage("assistant", plan.response, `Status: ${plan.status} · External execution: ${plan.execution}`);
+  const taskInput = byId("task-input");
+  if (taskInput) {
+    taskInput.value = text.slice(0, 240);
+    const taskHint = byId("task-hint");
+    if (taskHint) taskHint.textContent = "Your latest chat request is ready to add as a task. Review it and select Add task.";
+  }
   setWorkspace(plan.product);
   selectedPartner = null;
   partnerList.querySelectorAll("button").forEach(button => {
