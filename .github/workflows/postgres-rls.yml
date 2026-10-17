@@ -33,5 +33,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f db/migrations/001_foundation.sql
       - name: Apply access policies
         run: psql -v ON_ERROR_STOP=1 -f db/migrations/002_customer_access.sql
+      - name: Apply task event integrity migration
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/003_task_event_integrity.sql
+      - name: Verify event ownership integrity
+        run: psql -v ON_ERROR_STOP=1 -f db/tests/task-event-integrity.sql
       - name: Verify tenant isolation
         run: psql -v ON_ERROR_STOP=1 -f db/tests/tenant-isolation.sql

@@ -33,6 +33,8 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f db/migrations/001_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/002_customer_access.sql
+      - name: Apply task event integrity migration
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/003_task_event_integrity.sql
       - name: Install test-only PostgreSQL driver
         run: npm install --no-save --no-package-lock pg@8
       - name: Exercise real PostgreSQL task repository
