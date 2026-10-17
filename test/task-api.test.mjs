@@ -78,3 +78,21 @@ test("development task API requires secret and persists after restart", async ()
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test("development API is unavailable when NODE_ENV is production", async () => {
+  const port = await freePort();
+  const running = await startServer({
+    NODE_ENV: "production",
+    CHATBLIZ_DEV_TASK_TOKEN: "test-only-token-not-for-production-123456789",
+    CHATBLIZ_DEV_BUSINESS_ID: "test-business"
+  }, port);
+  try {
+    const response = await fetch(`${running.url}/api/dev/tasks`, {
+      headers: { Authorization: "Bearer test-only-token-not-for-production-123456789" }
+    });
+    assert.equal(response.status, 404);
+  } finally {
+    await stopServer(running.child);
+  }
+});

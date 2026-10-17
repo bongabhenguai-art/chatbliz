@@ -44,6 +44,7 @@ async function parseBody(req) {
   catch { throw Object.assign(new Error("Invalid JSON"), { code: 400 }); }
 }
 async function taskApi(req, res, pathname) {
+  if (process.env.NODE_ENV === "production") return json(res, 404, { error: "Not found" });
   if (!authorized(req)) return json(res, 401, { error: "Unauthorized or task API not configured" });
   // This is a private development endpoint. The caller's business identity must
   // eventually come from a verified session, not from the request payload.
@@ -55,7 +56,7 @@ async function taskApi(req, res, pathname) {
       if (typeof body?.request !== "string" || !body.request.trim() || body.request.length > 4000) {
         return json(res, 400, { error: "Request must contain 1–4000 characters" });
       }
-      const task = await taskStore.create({ businessId, request: body.request });
+      const task = await taskStore.create({ businessId, request: body.request, idempotencyKey: req.headers["idempotency-key"] || null });
       return json(res, 201, { task });
     }
     if (pathname === "/api/dev/tasks" && req.method === "GET") {
@@ -68,7 +69,8 @@ async function taskApi(req, res, pathname) {
     }
     return json(res, 404, { error: "Not found" });
   } catch (error) {
-    if ([400, 413, 415].includes(error.code)) return json(res, error.code, { error: error.message });
+    if ([400, 409, 413, 415].includes(error.code)) return json(res, error.code, { error: error.message });
+    if (error instanceof TypeError) return json(res, 400, { error: error.message });
     console.error("Task API error", error);
     return json(res, 500, { error: "Task service error" });
   }

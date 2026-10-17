@@ -37,3 +37,20 @@ test("serializes concurrent writes without losing tasks", async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+
+test("idempotent create returns the same task and rejects changed request", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "chatbliz-idempotency-"));
+  try {
+    const store = createTaskStore({ filePath: join(dir, "tasks.json") });
+    const input = { businessId: "business-a", request: "Prepare a report", idempotencyKey: "report-request-001" };
+    const [first, second] = await Promise.all([store.create(input), store.create(input)]);
+    assert.equal(first.id, second.id);
+    assert.equal((await store.list({ businessId: "business-a" })).length, 1);
+    await assert.rejects(store.create({ ...input, request: "Send a message" }), error => error.code === 409);
+    const other = await store.create({ ...input, businessId: "business-b" });
+    assert.notEqual(other.id, first.id);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

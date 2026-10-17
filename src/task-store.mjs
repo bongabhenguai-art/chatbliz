@@ -42,14 +42,22 @@ export function createTaskStore({ filePath }) {
     if (typeof businessId !== "string" || !businessId.trim()) throw new TypeError("Authenticated business ID is required");
   };
   return {
-    create({ businessId, request, employee = "executive", workspace = "business" }) {
+    create({ businessId, request, employee = "executive", workspace = "business", idempotencyKey = null }) {
       validateBusiness(businessId);
       if (typeof request !== "string" || !request.trim()) throw new TypeError("Request is required");
+      if (idempotencyKey !== null && (typeof idempotencyKey !== "string" || !/^[A-Za-z0-9_-]{8,128}$/.test(idempotencyKey))) throw new TypeError("Invalid idempotency key");
       return exclusive(async () => {
         const db = await load();
+        if (idempotencyKey) {
+          const previous = db.tasks.find(item => item.businessId === businessId && item.idempotencyKey === idempotencyKey);
+          if (previous) {
+            if (previous.request !== request.trim()) throw Object.assign(new Error("Idempotency key reused for a different request"), { code: 409 });
+            return clone(previous);
+          }
+        }
         const now = new Date().toISOString();
         const task = {
-          id: randomUUID(), businessId, request: request.trim(), employee, workspace,
+          id: randomUUID(), businessId, request: request.trim(), employee, workspace, idempotencyKey,
           status: "queued", createdAt: now, updatedAt: now, output: null,
           events: [{ status: "queued", at: now }]
         };
