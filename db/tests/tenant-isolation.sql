@@ -41,7 +41,7 @@ END $$;
 -- A viewer may read only their own business tasks and may not create tasks.
 SELECT set_config('app.user_id','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
 SELECT set_config('app.business_id','22222222-2222-4222-8222-222222222222',true);
-DO $
+DO $check$
 DECLARE blocked boolean := false;
 BEGIN
   IF (SELECT count(*) FROM business_tasks) <> 1 THEN
@@ -58,15 +58,15 @@ BEGIN
   IF NOT blocked THEN
     RAISE EXCEPTION 'Viewer was able to insert a task';
   END IF;
-END $;
+END $check$;
 -- No authenticated identity must reveal no task records.
 SELECT set_config('app.user_id','',true);
 SELECT set_config('app.business_id','',true);
-DO $
+DO $check$
 BEGIN
   IF (SELECT count(*) FROM business_tasks) <> 0 THEN
     RAISE EXCEPTION 'Unauthenticated context exposed tasks';
   END IF;
-END $;
+END $check$;
 RESET ROLE;
 ROLLBACK;
