@@ -37,9 +37,10 @@ for (const partner of PARTNERS) {
 for (const product of PRODUCTS) {
   const card = el("article", "product-card");
   card.append(el("span", "product-icon", product.icon), el("h3", "", product.name), el("p", "", product.description));
-  const action = el("button", "product-link", "Plan with Chatbliz →");
+  const action = el("button", "product-link", product.id === "content" ? "Open Digital Studio →" : "Plan with Chatbliz →");
   action.type = "button";
   action.addEventListener("click", () => {
+    if (product.id === "content") { openStudio(); return; }
     setWorkspace(product);
     input.value = `Help me plan ${product.name} for my business`;
     input.focus();
@@ -77,10 +78,24 @@ document.querySelectorAll("[data-workspace]").forEach(button => {
   });
 });
 
+const STUDIO_URL = "https://chatbliz-digital-studio-test-700cmi.v2.appdeploy.ai/";
+function openStudio() {
+  const win = window.open(STUDIO_URL, "_blank", "noopener,noreferrer");
+  if (!win) {
+    appendMessage("assistant", "Your browser blocked the Studio tab. Open the Digital Studio directly: " + STUDIO_URL, "Studio link available · Separate deployment");
+  } else {
+    appendMessage("assistant", "Digital Visual AI Studio opened in a separate secure tab. Production media and customer records are not yet synchronized with Chatbliz OS.", "Studio launch requested · Separate deployment");
+  }
+}
 function setWorkspace(product) {
   document.querySelectorAll("[data-workspace]").forEach(button => button.classList.toggle("active", button.dataset.workspace === product.id));
   byId("active-workspace-label").textContent = product.name.toUpperCase();
   byId("workspace-title").textContent = product.id === "business" ? "What are we working on today?" : `Let's work on ${product.name}`;
+  let launch = byId("studio-launch");
+  if (product.id === "content") {
+    if (!launch) { launch = el("button", "product-link", "Launch Digital Visual AI Studio ↗"); launch.id = "studio-launch"; launch.type = "button"; launch.addEventListener("click", openStudio); byId("workspace-title").insertAdjacentElement("afterend", launch); }
+    launch.hidden = false;
+  } else if (launch) launch.hidden = true;
 }
 
 function appendMessage(role, text, status) {
@@ -105,6 +120,7 @@ function sendMessage(value) {
     plan.response = `${partner.name} can help with ${plan.product.name}. I’ve prepared this as a planning request. ${plan.product.status}. No external action has been taken.`;
   }
   appendMessage("assistant", plan.response, `Status: ${plan.status} · External execution: ${plan.execution}`);
+  if (plan.product.id === "content") appendMessage("assistant", "Your existing Digital Visual AI Studio is available through the Launch Digital Visual AI Studio button in My Studio. Opening it does not transfer private data or authorize publishing.", "Existing Studio connected by launch link");
   setWorkspace(plan.product);
   selectedPartner = null;
   partnerList.querySelectorAll("button").forEach(button => {
