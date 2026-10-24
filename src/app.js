@@ -142,3 +142,39 @@ input.addEventListener("keydown", event => {
     byId("chat-form").requestSubmit();
   }
 });
+
+// Optional browser speech-to-text: never claims to be the connected AI voice service.
+const voiceButton = byId("voice-input-button");
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (voiceButton) {
+  if (!SpeechRecognition) {
+    voiceButton.disabled = true;
+    voiceButton.title = "Voice typing is not supported in this browser. You can still type your request.";
+    voiceButton.setAttribute("aria-label", voiceButton.title);
+  } else {
+    let recognition = null;
+    voiceButton.addEventListener("click", () => {
+      if (recognition) { recognition.stop(); return; }
+      recognition = new SpeechRecognition();
+      recognition.lang = navigator.language || "en-ZA";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      voiceButton.textContent = "■";
+      voiceButton.setAttribute("aria-label", "Stop voice input");
+      recognition.onresult = event => {
+        const spoken = event.results?.[0]?.[0]?.transcript || "";
+        input.value = [input.value.trim(), spoken].filter(Boolean).join(" ");
+        input.focus();
+      };
+      recognition.onerror = event => {
+        appendMessage("assistant", "Voice typing could not start (" + event.error + "). Please type your request instead.", "No voice recording was saved by Chatbliz");
+      };
+      recognition.onend = () => {
+        recognition = null;
+        voiceButton.textContent = "🎙";
+        voiceButton.setAttribute("aria-label", "Speak your message");
+      };
+      try { recognition.start(); } catch { recognition = null; voiceButton.textContent = "🎙"; }
+    });
+  }
+}
