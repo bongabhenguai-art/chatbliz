@@ -66,6 +66,22 @@
           <p class="disclosure">Browser voice playback requires speech synthesis support. This panel does not fetch payment, CRM or calendar records or send reports automatically.</p>
         </section>
 
+        <section class="conversation" id="chatbliz-studio" aria-label="Chatbliz digital visual studio">
+          <div class="section-heading"><div><p class="eyebrow">MY STUDIO · LOCAL PRODUCTION</p><h2>Camera &amp; Recording Studio</h2></div><span class="muted-label">Device capture · no cloud upload</span></div>
+          <p class="disclosure">Allow camera and microphone access to preview, record, play back and save video. HTTPS or localhost required. Recording remains on this device until you download it.</p>
+          <label for="studio-camera-select">Camera source</label>
+          <select id="studio-camera-select" data-studio-camera-select aria-label="Camera source"><option value="">Default camera</option></select>
+          <video autoplay muted playsinline controls aria-label="Live camera preview" style="width:100%;max-height:440px;background:#050505;border:1px solid #393124;border-radius:12px;margin:12px 0"></video>
+          <div class="suggestions">
+            <button type="button" data-studio-camera>Connect camera &amp; mic</button>
+            <button type="button" data-studio-record disabled>● Start recording</button>
+            <button type="button" data-studio-stop disabled>■ Stop</button>
+            <a data-studio-download hidden href="#" download>Download recording</a>
+          </div>
+          <p data-studio-status role="status" aria-live="polite">Camera is disconnected. No recording in progress.</p>
+          <video data-studio-playback controls playsinline aria-label="Recorded video playback" style="width:100%;max-height:360px;background:#050505;border-radius:12px"></video>
+        </section>
+
         <section class="products-section" aria-labelledby="products-title">
           <div class="section-heading"><div><p class="eyebrow">FOUR CORE SERVICES</p><h2 id="products-title">Your workspaces</h2></div><span class="muted-label">Shared capabilities, one Chatbliz account</span></div>
           <div id="product-grid" class="product-grid"></div>
@@ -82,5 +98,6 @@
     <script type="module" src="./src/app.js"></script>
     <script type="module" src="./src/reports-ui.js"></script>
     <script type="module" src="./src/voice-reports-ui.js"></script>
+    <script type="module" src="./src/studio-capture.js"></script>
   </body>
 </html>
