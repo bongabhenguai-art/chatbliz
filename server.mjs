@@ -26,7 +26,7 @@ createServer(async (req, res) => {
       res.setHeader("X-Content-Type-Options", "nosniff");
       if (!process.env.OPENAI_API_KEY) {
         res.writeHead(503);
-        res.end('data: {"error":"AI provider is not configured"}\\n\\n'.replaceAll("\\\\n","\\n"));
+        res.end('data: {"error":"AI provider is not configured"}\n\n');
         return;
       }
       try {
@@ -54,7 +54,7 @@ createServer(async (req, res) => {
         });
         if (!upstream.ok || !upstream.body) {
           res.writeHead(502);
-          res.end('data: {"error":"AI provider request failed"}\\n\\n'.replaceAll("\\\\n","\\n"));
+          res.end('data: {"error":"AI provider request failed"}\n\n');
           return;
         }
         res.writeHead(200);
@@ -62,7 +62,7 @@ createServer(async (req, res) => {
         res.end();
       } catch (error) {
         if (!res.headersSent) res.writeHead(400);
-        res.end(`data: ${JSON.stringify({ error: error.message === "Request too large" ? error.message : "Invalid chat request" })}\\n\\n`);
+        res.end(`data: ${JSON.stringify({ error: error.message === "Request too large" ? error.message : "Invalid chat request" })}\n\n`);
       }
       return;
     }
