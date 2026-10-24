@@ -7,8 +7,23 @@
     <meta name="description" content="Chatbliz OS — your business partner in your hands. Plan your business, brand, website and content in one chat-first workspace.">
     <title>Chatbliz OS — Your Business Partner</title>
     <link rel="stylesheet" href="./styles.css">
-  <style>.advanced-section{margin:16px 0;border:1px solid #35302a;border-radius:12px;padding:12px 16px}.advanced-section>summary{cursor:pointer;color:#e5c751;font-size:14px;font-weight:700;min-height:34px;display:list-item;align-content:center}.advanced-section[open]>summary{margin-bottom:12px}.composer-bottom button{min-width:44px;min-height:44px}.conversation{scroll-margin-top:20px}@media(max-width:720px){.advanced-section{padding:10px 12px}.welcome-row{padding:15px 0 8px}}</style></head>
-  <body>
+  <style>.advanced-section{margin:16px 0;border:1px solid #35302a;border-radius:12px;padding:12px 16px}.advanced-section>summary{cursor:pointer;color:#e5c751;font-size:14px;font-weight:700;min-height:34px;display:list-item;align-content:center}.advanced-section[open]>summary{margin-bottom:12px}.composer-bottom button{min-width:44px;min-height:44px}.conversation{scroll-margin-top:20px}@media(max-width:720px){.advanced-section{padding:10px 12px}.welcome-row{padding:15px 0 8px}}</style><style>
+/* Chatbot-first owner workspace: retain existing DOM, handlers and advanced tools. */
+.chatbot-mode .sidebar{display:none}
+.chatbot-mode .main-content{margin-left:0;max-width:1000px;margin-inline:auto;padding:0 20px 32px}
+.chatbot-mode .topbar{height:58px}
+.chatbot-mode .welcome-row{padding:22px 0 8px}
+.chatbot-mode .welcome-row h1{font-size:clamp(24px,4vw,38px)}
+.chatbot-mode .today-card{display:none}
+.chatbot-mode .conversation{display:flex;flex-direction:column;min-height:min(66vh,740px);margin-top:12px}
+.chatbot-mode .chat-thread{flex:1;min-height:260px;max-height:60vh;overflow-y:auto}
+.chatbot-mode .composer textarea{font-size:16px;min-height:52px}
+.chatbot-mode .advanced-section{max-width:100%;margin:10px 0}
+.chatbot-mode .advanced-section>summary{font-size:13px}
+.chatbot-mode .footer{margin-top:16px}
+@media(max-width:720px){.chatbot-mode .main-content{padding:0 12px 24px}.chatbot-mode .topbar{height:48px}.chatbot-mode .welcome-row{padding:12px 0 4px}.chatbot-mode .conversation{min-height:67dvh}.chatbot-mode .chat-thread{max-height:60dvh}.chatbot-mode .composer{margin:0 8px 8px}}
+</style></head>
+  <body class="chatbot-mode">
     <div class="app-shell">
       <aside class="sidebar" aria-label="Main navigation">
         <a class="wordmark" href="#home" aria-label="Chatbliz home"><span class="mark">C</span><span>Chatbliz<small>BUSINESS PARTNER</small></span></a>
@@ -32,8 +47,8 @@
         <section class="welcome-row">
           <div>
             <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
-            <h1 id="workspace-title">What are we working on today?</h1>
-            <p class="welcome-copy">Just tell Chatbliz what you need. Speak or type — no technical knowledge required.</p>
+            <h1 id="workspace-title">What can I do for you today?</h1>
+            <p class="welcome-copy">Your business partner. Ask by text or microphone.</p>
           </div>
           <div class="today-card"><span class="today-icon">✦</span><span><strong>One conversation</strong><small>Four connected workspaces</small></span></div>
         </section>
@@ -45,9 +60,9 @@
 
 </details>
         <section class="conversation" aria-label="Chatbliz conversation">
-          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
+          <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Jarvis · Chatbliz</strong><small>Bonga Bhengu’s business assistant</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
           <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
-            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p>Hello Bonga. I’m here to help you build and grow your business. Tell me what you want to work on, and I’ll suggest a clear next step.</p><small>Planning only · no external actions have been taken</small></div></article>
+            <article class="message assistant-message"><span class="message-avatar">C</span><div class="message-body"><p>Hello Bonga. What would you like me to help you with? You can type or use the microphone.</p><small>Planning only · no external actions have been taken</small></div></article>
           </div>
           <div class="suggestions" id="suggestions" aria-label="Suggested prompts"></div>
           <form id="chat-form" class="composer">
