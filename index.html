@@ -7,7 +7,7 @@
     <meta name="description" content="Chatbliz OS — your business partner in your hands. Plan your business, brand, website and content in one chat-first workspace.">
     <title>Chatbliz OS — Your Business Partner</title>
     <link rel="stylesheet" href="./styles.css">
-  </head>
+  <style>.advanced-section{margin:16px 0;border:1px solid #35302a;border-radius:12px;padding:12px 16px}.advanced-section>summary{cursor:pointer;color:#e5c751;font-size:14px;font-weight:700;min-height:34px;display:list-item;align-content:center}.advanced-section[open]>summary{margin-bottom:12px}.composer-bottom button{min-width:44px;min-height:44px}.conversation{scroll-margin-top:20px}@media(max-width:720px){.advanced-section{padding:10px 12px}.welcome-row{padding:15px 0 8px}}</style></head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Main navigation">
@@ -33,16 +33,17 @@
           <div>
             <p class="eyebrow">YOUR BUSINESS PARTNER IN YOUR HANDS</p>
             <h1 id="workspace-title">What are we working on today?</h1>
-            <p class="welcome-copy">Tell your team what your business needs. Chatbliz helps you plan the next step and keeps each action visible.</p>
+            <p class="welcome-copy">Just tell Chatbliz what you need. Speak or type — no technical knowledge required.</p>
           </div>
           <div class="today-card"><span class="today-icon">✦</span><span><strong>One conversation</strong><small>Four connected workspaces</small></span></div>
         </section>
 
-        <section class="partners-section" aria-labelledby="partners-title">
+        <details class="advanced-section"><summary>Choose a specialist (optional)</summary><section class="partners-section" aria-labelledby="partners-title">
           <div class="section-heading"><div><p class="eyebrow">YOUR AI BUSINESS TEAM</p><h2 id="partners-title">Choose who helps</h2></div><span class="muted-label">Planning tools · connections pending</span></div>
           <div class="partner-list" id="partner-list"></div>
         </section>
 
+</details>
         <section class="conversation" aria-label="Chatbliz conversation">
           <div class="conversation-head"><div class="assistant-avatar">C</div><div><strong>Chatbliz</strong><small>Your business partner</small></div><span class="conversation-status"><i></i> Ready to plan</span></div>
           <div id="chat-thread" class="chat-thread" role="log" aria-live="polite" aria-relevant="additions">
@@ -51,24 +52,25 @@
           <div class="suggestions" id="suggestions" aria-label="Suggested prompts"></div>
           <form id="chat-form" class="composer">
             <label class="sr-only" for="message-input">Message Chatbliz</label>
-            <textarea id="message-input" rows="1" maxlength="4000" placeholder="Tell Chatbliz what your business needs…" required></textarea>
-            <div class="composer-bottom"><span>Enter to send · Shift + Enter for a new line</span><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
+            <textarea id="message-input" rows="1" maxlength="4000" placeholder="What do you need help with today?" required></textarea>
+            <div class="composer-bottom"><span>Type or speak to Chatbliz</span><button id="voice-input-button" class="send-button" type="button" aria-label="Speak your message" title="Speak your message">🎙</button><button class="send-button" type="submit" aria-label="Send message">↑</button></div>
           </form>
           <p class="disclosure">Chatbliz currently prepares local plans. AI providers, account connections, WhatsApp, publishing, bookings and payments are not connected in this build.</p>
         </section>
 
-        <section id="system-reports" class="conversation" aria-label="My system report"></section>
+        <details class="advanced-section"><summary>View business reports</summary><section id="system-reports" class="conversation" aria-label="My system report"></section></details>
 
-        <section class="products-section" aria-labelledby="products-title">
+        <details class="advanced-section"><summary>Explore my four services</summary><section class="products-section" aria-labelledby="products-title">
           <div class="section-heading"><div><p class="eyebrow">FOUR CORE SERVICES</p><h2 id="products-title">Your workspaces</h2></div><span class="muted-label">Shared capabilities, one Chatbliz account</span></div>
           <div id="product-grid" class="product-grid"></div>
         </section>
 
-        <section class="plans-section" aria-labelledby="plans-title">
+        </details><details class="advanced-section"><summary>See paid packages</summary><section class="plans-section" aria-labelledby="plans-title">
           <div class="section-heading"><div><p class="eyebrow">GROW WITH YOUR TEAM</p><h2 id="plans-title">Chatbliz packages</h2></div><span class="muted-label">Checkout and billing are not connected</span></div>
           <div id="plan-grid" class="plan-grid"></div>
           <p class="pricing-note">Prices and package details need owner confirmation before checkout. Enterprise is custom quoted.</p>
         </section>
+</details>
         <footer class="footer">Chatbliz OS <span>·</span> Built for business owners <span>·</span> <a href="https://chatbliz.online" target="_blank" rel="noreferrer">chatbliz.online</a></footer>
       </main>
     </div>
